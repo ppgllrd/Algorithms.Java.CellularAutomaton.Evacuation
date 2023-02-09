@@ -2,7 +2,6 @@ import gui.Canvas;
 import gui.Frame;
 import util.Random;
 
-
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -242,11 +241,12 @@ public class CellularAutomata {
       while (CellularAutomata.this.numberOfAgents > 0) {
         tick();
         if (canvas != null) {
+          // canvas.repaint();
+          canvas.update();
           try {
-            Thread.sleep(15); // wait some milliseconds
+            Thread.sleep(50); // wait some milliseconds
           } catch (Exception ignored) {
           }
-          canvas.repaint();
         }
       }
       System.out.println(ticks);
@@ -258,12 +258,11 @@ public class CellularAutomata {
       int pixelsPerCell = 8;
       var canvas = new Canvas(columns * pixelsPerCell, rows * pixelsPerCell) {
         @Override
-        public void paint(Graphics graphics, Canvas canvas) {
-          CellularAutomata.this.paint((Graphics2D) graphics, canvas);
+        public void paint(Graphics2D graphics2D, Canvas canvas) {
+          CellularAutomata.this.paint(graphics2D, canvas);
         }
       };
       var frame = new Frame(canvas);
-      frame.setVisible(true);
       new RunThread(canvas, numberOfAgents).start();
     } else {
       new RunThread(null, numberOfAgents).start();
@@ -289,8 +288,6 @@ public class CellularAutomata {
   }
 
   void paint(Graphics2D graphics2D, Canvas canvas) {
-    graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
     var wc = canvas.getWidth();
     var hc = canvas.getHeight();
     var dimc = Math.min(wc, hc);
@@ -309,8 +306,8 @@ public class CellularAutomata {
           graphics2D.setColor(Color.blue);
           graphics2D.fillOval(j * sc, (rows - 1 - i) * sc, diameter, diameter);
         } else if (cells[i][j] == Cell.Empty) {
-          graphics2D.setColor(Color.LIGHT_GRAY);
-          graphics2D.fillOval(j * sc, (rows - 1 - i) * sc, diameter, diameter);
+          // graphics2D.setColor(Color.LIGHT_GRAY);
+          // graphics2D.fillOval(j * sc, (rows - 1 - i) * sc, diameter, diameter);
         } else {
           graphics2D.setColor(Color.red);
           graphics2D.fillRect(j * sc, (rows - 1 - i) * sc, diameter, diameter);
