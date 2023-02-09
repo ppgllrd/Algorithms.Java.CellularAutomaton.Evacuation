@@ -1,7 +1,6 @@
 class Main {
   public static void main(String[] args) {
     var cellularAutomata = new CellularAutomata(20, 100, 0.5);
-    cellularAutomata.clearCells();
 
     cellularAutomata.setExitAt(10, 99);
     cellularAutomata.setExitAt(19, 99);
@@ -41,6 +40,7 @@ class Main {
     cellularAutomata.blockCellAt(18, 10);
     cellularAutomata.blockCellAt(19, 10);
 
-    cellularAutomata.run(500);
+    cellularAutomata.runGUI(500);
+    // cellularAutomata.run(500);
   }
 }

@@ -1,8 +1,11 @@
-import javax.swing.*;
+import gui.Canvas;
+import gui.Frame;
+import util.Random;
+
+
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Basic Cellular Automata for simulating pedestrian evacuation.
@@ -27,11 +30,11 @@ public class CellularAutomata {
   private Cell[][] cells;
   private Cell[][] nextCells;
 
-  private final List<Location> exits;
+  private final Set<Location> exits;
 
   private final Random random;
 
-  private int agents;
+  private int numberOfAgents;
   private int ticks;
 
   public CellularAutomata(int rows, int columns, double cellDimension) {
@@ -49,9 +52,10 @@ public class CellularAutomata {
     this.cellDimension = cellDimension;
     this.cells = new Cell[rows][columns];
     this.nextCells = new Cell[rows][columns];
-    this.exits = new ArrayList<>();
+    this.exits = new HashSet<>();
     this.riskMatrix = new int[rows][columns];
     this.random = Random.getInstance();
+    clearCells();
   }
 
   public void clearCells() {
@@ -123,7 +127,8 @@ public class CellularAutomata {
     return neighbours;
   }
 
-  private List<Movement> possibleMovements(List<Location> neighborhood) {
+  private List<Movement> possibleMovements(int i, int j) {
+    var neighborhood = neighborhood(i, j);
     var movements = new ArrayList<Movement>(neighborhood.size());
     for (var neighbour : neighborhood) {
       double repulsion = riskMatrix[neighbour.row][neighbour.column];
@@ -133,22 +138,20 @@ public class CellularAutomata {
       around.removeIf(location -> cells[location.row][location.column] != Cell.Empty);
       if (around.isEmpty()) {
         // all neighbours of new cell are occupied or blocked
-        repulsion *= 1.15;
+        repulsion *= 1.75;
       }
       var bias = -0.35;
-      movements.add(new Movement(neighbour, Math.exp(bias * repulsion)));
+      var desirability = Math.exp(bias * repulsion);
+      movements.add(new Movement(neighbour, desirability));
     }
     return movements;
   }
 
   private Optional<Location> moveAgentAt(int i, int j) {
-    var neighborhood = neighborhood(i, j);
-    if (neighborhood.isEmpty()) {
+    var movements = possibleMovements(i, j);
+    if (movements.isEmpty()) {
       return Optional.empty();
     }
-
-    var movements = possibleMovements(neighborhood);
-
     // choose one according to discrete distribution of desirabilities
     double sum = 0.0;
     for (var move : movements) {
@@ -168,20 +171,20 @@ public class CellularAutomata {
     return Optional.empty();
   }
 
-  private void placeRandomAgents(int toPlace) {
-    agents = 0;
-    while (agents < toPlace) {
+  private void placeRandomAgents(int numberOfAgentsToPlace) {
+    numberOfAgents = 0;
+    while (numberOfAgents < numberOfAgentsToPlace) {
       int i = random.nextInt(rows);
       int j = random.nextInt(columns);
       if (cells[i][j] == Cell.Empty) {
         cells[i][j] = Cell.Occupied;
-        agents++;
+        numberOfAgents++;
       }
     }
   }
 
-  private boolean isExit(int i, int j) {
-    return exits.contains(new Location(i, j));
+  private boolean isExit(Location location) {
+    return exits.contains(location);
   }
 
   public void tick() {
@@ -194,25 +197,23 @@ public class CellularAutomata {
           nextCells[i][j] = Cell.Empty;
         }
       }
-      ticks++;
     }
 
     // move each agent
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < columns; j++) {
         if (cells[i][j] == Cell.Occupied) {
-          var optional = moveAgentAt(i, j);
-          if (optional.isPresent()) {
-            var location = optional.get();
-            if (isExit(location.row, location.column)) {
-              nextCells[location.row][location.column] = Cell.Empty;
-              agents--;
-            } else {
-              nextCells[location.row][location.column] = Cell.Occupied;
-            }
+          if (isExit(new Location(i, j))) {
+            numberOfAgents--; // agent exits scenario
           } else {
-            // don't move
-            nextCells[i][j] = Cell.Occupied;
+            var optional = moveAgentAt(i, j);
+            if (optional.isPresent()) {
+              var location = optional.get();
+              nextCells[location.row][location.column] = Cell.Occupied;
+            } else {
+              // don't move
+              nextCells[i][j] = Cell.Occupied;
+            }
           }
         }
       }
@@ -221,46 +222,73 @@ public class CellularAutomata {
     var temp = cells;
     cells = nextCells;
     nextCells = temp;
+
+    ticks++;
   }
 
   private class RunThread extends Thread {
-    Frame.Canvas canvas;
-    int numAgents;
+    Canvas canvas;
+    int numberOfAgents;
 
-    public RunThread(Frame.Canvas canvas, int numAgents) {
+    public RunThread(Canvas canvas, int numberOfAgents) {
       this.canvas = canvas;
-      this.numAgents = numAgents;
+      this.numberOfAgents = numberOfAgents;
     }
 
     public void run() {
       computeRiskMatrix();
-      placeRandomAgents(numAgents);
+      placeRandomAgents(numberOfAgents);
       ticks = 0;
-      while (agents > 0) {
-        try {
-          Thread.sleep(20); // wait some milliseconds
-        } catch (Exception ignored) {
-        }
+      while (CellularAutomata.this.numberOfAgents > 0) {
         tick();
-        canvas.repaint();
+        if (canvas != null) {
+          try {
+            Thread.sleep(15); // wait some milliseconds
+          } catch (Exception ignored) {
+          }
+          canvas.repaint();
+        }
       }
       System.out.println(ticks);
     }
   }
 
-  public void run(int numAgents) {
-    Frame frame = new Frame();
-    frame.setVisible(true);
-    var runThread = new RunThread(frame.canvas, numAgents);
-    runThread.start();
+  private void run(int numberOfAgents, boolean gui) {
+    if (gui) {
+      int pixelsPerCell = 8;
+      var canvas = new Canvas(columns * pixelsPerCell, rows * pixelsPerCell) {
+        @Override
+        public void paint(Graphics graphics, Canvas canvas) {
+          CellularAutomata.this.paint((Graphics2D) graphics, canvas);
+        }
+      };
+      var frame = new Frame(canvas);
+      frame.setVisible(true);
+      new RunThread(canvas, numberOfAgents).start();
+    } else {
+      new RunThread(null, numberOfAgents).start();
+    }
   }
 
-  public void run(long seed, int numAgents) {
+  public void run(int numberOfAgents) {
+    run(numberOfAgents, false);
+  }
+
+  public void run(long seed, int numberOfAgents) {
     random.setSeed(seed);
-    run(numAgents);
+    run(numberOfAgents);
   }
 
-  void paintState(Graphics2D graphics2D, JComponent canvas) {
+  public void runGUI(int numberOfAgents) {
+    run(numberOfAgents, true);
+  }
+
+  public void runGUI(long seed, int numberOfAgents) {
+    random.setSeed(seed);
+    runGUI(numberOfAgents);
+  }
+
+  void paint(Graphics2D graphics2D, Canvas canvas) {
     graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     var wc = canvas.getWidth();
@@ -270,10 +298,6 @@ public class CellularAutomata {
     var w = columns;
     var h = rows;
     var dim = Math.max(w, h);
-
-    // var r = dimc / dim / 2;
-    // var sc = 2 * r; //  * dimc / dim;
-    // var diameter = 2 * r;
 
     var sc = wc / columns;
 
@@ -297,34 +321,6 @@ public class CellularAutomata {
     graphics2D.setColor(Color.green);
     for (var location : exits) {
       graphics2D.fillRect(location.column * sc, (rows - 1 - location.row) * sc, diameter, diameter);
-    }
-  }
-
-  public class Frame extends JFrame {
-    Canvas canvas;
-
-    public Frame() {
-      super();
-      canvas = new Canvas();
-      this.add(canvas);
-      this.pack();
-      this.setResizable(false);
-      this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    }
-
-    private class Canvas extends JComponent {
-      final int pixelsPerCell = 8;
-      final int width = columns * pixelsPerCell, height = rows * pixelsPerCell;
-
-      public Canvas() {
-        super();
-        setPreferredSize(new Dimension(width, height));
-      }
-
-      protected void paintComponent(Graphics graphics) {
-        super.paintComponent(graphics);
-        paintState((Graphics2D) graphics, this);
-      }
     }
   }
 }
