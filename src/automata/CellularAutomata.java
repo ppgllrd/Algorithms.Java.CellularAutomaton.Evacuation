@@ -1,8 +1,12 @@
+package automata;
+
+import geometry._2d.Location;
 import gui.Canvas;
 import gui.Frame;
 import util.Random;
 
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -96,14 +100,18 @@ public class CellularAutomata {
     for (var neighbour : neighborhood) {
       double repulsion = riskMatrix[neighbour.row()][neighbour.column()];
 
-      var around = neighborhood(neighbour.row(), neighbour.column());
-      // keep only empty neighbours
-      around.removeIf(location -> agentsLocations[location.row()][location.column()] != Cell.Empty);
-      if (around.isEmpty()) {
-        // all neighbours of new cell are occupied or blocked
-        repulsion *= 2.0;
+      // count empty cells around new location
+      var numberOfEmptyCellsAround = 0;
+      for (var around : neighborhood(neighbour.row(), neighbour.column())) {
+        if (isEmpty(around.row(), around.column())) {
+          numberOfEmptyCellsAround++;
+        }
       }
-      var bias = -0.75;
+      if (numberOfEmptyCellsAround == 0) {
+        // all neighbours of new cell are occupied or blocked
+        repulsion *= 1.30;
+      }
+      var bias = -0.6;
       var desirability = Math.exp(bias * repulsion);
       movements.add(new Movement(neighbour, desirability));
     }
@@ -116,22 +124,9 @@ public class CellularAutomata {
       return Optional.empty();
     }
 
-    // choose one according to discrete distribution of desirabilities
-    double sum = 0.0;
-    for (var move : movements) {
-      sum += move.desirability;
-    }
-
-    var choose = random.nextDouble(sum);
-    sum = 0.0;
-    for (var move : movements) {
-      sum += move.desirability;
-      if (sum > choose) {
-        return Optional.of(move.location);
-      }
-    }
-    // not reached
-    return Optional.empty();
+    // choose one movement according to discrete distribution of desirabilities
+    var chosen = random.discrete(movements, Movement::desirability);
+    return Optional.of(chosen.location);
   }
 
   private void placeRandomAgents(int numberOfAgentsToPlace) {
@@ -153,18 +148,17 @@ public class CellularAutomata {
     // move each agent
     for (int i = 0; i < scenario.getRows(); i++) {
       for (int j = 0; j < scenario.getColumns(); j++) {
-        if (agentsLocations[i][j] == Cell.Occupied) {
-          if (scenario.isExit(i, j)) {
+        int row = i, column = j;
+        if (agentsLocations[row][column] == Cell.Occupied) {
+          if (scenario.isExit(row, column)) {
             numberOfAgents--; // agent exits scenario
           } else {
-            var optional = moveAgentAt(i, j);
-            if (optional.isPresent()) {
-              var location = optional.get();
-              agentsNextLocations[location.row()][location.column()] = Cell.Occupied;
-            } else {
-              // don't move
-              agentsNextLocations[i][j] = Cell.Occupied;
-            }
+            moveAgentAt(row, column).ifPresentOrElse(
+                // move to new location
+                location -> agentsNextLocations[location.row()][location.column()] = Cell.Occupied,
+                // no new location. Don't move
+                () -> agentsNextLocations[row][column] = Cell.Occupied
+            );
           }
         }
       }
@@ -206,13 +200,13 @@ public class CellularAutomata {
 
   private void run(int numberOfAgents, boolean gui) {
     if (gui) {
-      int pixelsPerCell = 8;
-      var canvas = new Canvas(scenario.getRows() * pixelsPerCell, scenario.getColumns() * pixelsPerCell) {
-        @Override
-        public void paint(Graphics2D graphics2D, Canvas canvas) {
-          CellularAutomata.this.paint(graphics2D, canvas);
-        }
-      };
+      var canvas = new Canvas.Builder()
+          .setRows(scenario.getRows())
+          .setColumns(scenario.getColumns())
+          .setPixelsPerCell(10)
+          .setPaint(CellularAutomata.this::paint)
+          .build();
+
       var frame = new Frame(canvas);
       computeRiskMatrix();
       placeRandomAgents(numberOfAgents);
@@ -240,20 +234,25 @@ public class CellularAutomata {
     runGUI(numberOfAgents);
   }
 
-  void paint(Graphics2D graphics2D, Canvas canvas) {
-    var wc = canvas.getWidth();
-    var hc = canvas.getHeight();
+  private static final Color
+      darkBlue = new Color(0, 71, 189),
+      lightBlue = new Color(0, 120, 227);
+  private static final Ellipse2D ellipse2D = new Ellipse2D.Double(0, 0, 0, 0);
 
-    var scale = Math.min(wc / scenario.getColumns(), hc / scenario.getRows());
-    var diameter = scale;
+  void paint(Canvas canvas) {
+    scenario.paint(canvas);
 
-    scenario.paint(graphics2D, canvas);
+    var diameter = 1;
+    var graphics2D = canvas.graphics2D();
 
-    graphics2D.setColor(Color.blue);
     for (int i = 0; i < scenario.getRows(); i++) {
       for (int j = 0; j < scenario.getColumns(); j++) {
         if (agentsLocations[i][j] == Cell.Occupied) {
-          graphics2D.fillOval(j * scale, (scenario.getRows() - 1 - i) * scale, diameter, diameter);
+          ellipse2D.setFrame(j, i, diameter, diameter);
+          graphics2D.setColor(darkBlue);
+          graphics2D.fill(ellipse2D);
+          graphics2D.setColor(lightBlue);
+          graphics2D.fill(ellipse2D);
         }
       }
     }

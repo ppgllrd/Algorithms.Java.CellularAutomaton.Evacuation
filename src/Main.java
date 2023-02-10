@@ -1,3 +1,6 @@
+import automata.CellularAutomata;
+import automata.Scenario;
+import geometry._2d.Rectangle;
 import util.Random;
 
 import java.util.HashSet;
@@ -13,11 +16,13 @@ class Main {
     var random = Random.getInstance();
 
     int rows = 40, columns = 120;
-
     var scenario = new Scenario(rows, columns, 0.5);
 
-    var exits = new java.util.HashSet<>(Set.of(new Rectangle(2, columns - 1, 5, 1), new Rectangle(rows - 7,
-        columns - 1, 5, 1), new Rectangle(10, 0, 5, 1), new Rectangle(rows - 15, 0, 5, 1)));
+    var exits = new java.util.HashSet<>(
+        Set.of(new Rectangle(2, columns - 1, 5, 1),
+            new Rectangle(rows - 7, columns - 1, 5, 1),
+            new Rectangle(10, 0, 5, 1),
+            new Rectangle(rows - 15, 0, 5, 1)));
 
     if (random.bernoulli(0.5)) {
       exits.add(new Rectangle(rows / 2, columns / 2, 2, 2));

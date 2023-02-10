@@ -1,3 +1,7 @@
+package automata;
+
+import geometry._2d.Location;
+import geometry._2d.Rectangle;
 import gui.Canvas;
 
 import java.awt.*;
@@ -14,26 +18,26 @@ public class Scenario {
   private final int rows, columns;
   private final double cellDimension;
 
-  private final Rectangle boundingBox;
+  private final geometry._2d.Rectangle boundingBox;
   private final Cell[][] grid;
 
-  private final Set<Rectangle> exits, blocks;
+  private final Set<geometry._2d.Rectangle> exits, blocks;
 
   public Scenario(int rows, int columns, double cellDimension) {
     if (rows <= 0) {
-      throw new IllegalArgumentException("Scenario: rows should be larger than 0.");
+      throw new IllegalArgumentException("Scenario: rows should be larger than 0");
     }
     if (columns <= 0) {
-      throw new IllegalArgumentException("Scenario: columns should be larger than 0.");
+      throw new IllegalArgumentException("Scenario: columns should be larger than 0");
     }
     if (cellDimension <= 0) {
-      throw new IllegalArgumentException("Scenario: cellDimension must be greater that 0");
+      throw new IllegalArgumentException("automata.Scenario: cellDimension must be greater that 0");
     }
     this.rows = rows;
     this.columns = columns;
     this.cellDimension = cellDimension;
 
-    this.boundingBox = new Rectangle(0, 0, rows, columns);
+    this.boundingBox = new geometry._2d.Rectangle(0, 0, rows, columns);
 
     this.grid = new Cell[rows][columns];
     for (Cell[] row : grid) {
@@ -52,14 +56,18 @@ public class Scenario {
     return columns;
   }
 
-  public void setExit(Rectangle rectangle) {
+  public double getCellDimension() {
+    return cellDimension;
+  }
+
+  public void setExit(geometry._2d.Rectangle rectangle) {
     if (!boundingBox.contains(rectangle)) {
       throw new IllegalArgumentException("setExit: exit is out of bounds of scenario");
     }
     exits.add(rectangle);
   }
 
-  public void setBlock(Rectangle rectangle) {
+  public void setBlock(geometry._2d.Rectangle rectangle) {
     if (!boundingBox.contains(rectangle)) {
       throw new IllegalArgumentException("setBlock: block is out of bounds of scenario");
     }
@@ -86,33 +94,29 @@ public class Scenario {
   }
 
   boolean isExit(Location location) {
-    for (var exit : exits) {
-      if (exit.intersects(location)) {
-        return true;
-      }
-    }
-    return false;
+    return isExit(location.row(), location.column());
   }
 
   boolean isBlocked(int row, int column) {
     return grid[row][column] == Cell.Blocked;
   }
 
-  void paint(Graphics2D graphics2D, Canvas canvas) {
-    var wc = canvas.getWidth();
-    var hc = canvas.getHeight();
+  boolean isBlocked(Location location) {
+    return isBlocked(location.row(), location.column());
+  }
 
-    var scale = Math.min(wc / columns, hc / rows);
-    var diameter = scale;
+  private static final Color
+      darkGreen = new Color(41, 175, 52),
+      lightGreen = new Color(0, 201, 20),
+      darkRed = new Color(142, 5, 0),
+      lightRed = new Color(179, 6, 0);
 
-    graphics2D.setColor(Color.green);
+  void paint(Canvas canvas) {
     for (var exit : exits) {
-      graphics2D.fillRect(exit.left() * scale, (rows - 1 - exit.top()) * scale, diameter * exit.width(), diameter * exit.height());
+      exit.paint(canvas, lightGreen, darkGreen);
     }
-
-    graphics2D.setColor(Color.red);
     for (var block : blocks) {
-      graphics2D.fillRect(block.left() * scale, (rows - 1 - block.top()) * scale, diameter * block.width(), diameter * block.height());
+      block.paint(canvas, lightRed, darkRed);
     }
   }
 }

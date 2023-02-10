@@ -3,6 +3,7 @@ package gui;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.function.Consumer;
 
 /**
  * A drawing class using double buffering.
@@ -16,11 +17,11 @@ public abstract class Canvas extends JLabel {
   private final Graphics2D offScreenGraphics2D, onScreenGraphics2D;
   private final ImageIcon imageIcon;
 
-  public Canvas(int height, int width, Color backgroundColor) {
+  public Canvas(int rows, int columns, int pixelsPerCell, Color backgroundColor) {
     super();
 
-    this.width = width;
-    this.height = height;
+    this.height = rows * pixelsPerCell;
+    this.width = columns * pixelsPerCell;
     this.backgroundColor = backgroundColor;
 
     setPreferredSize(new Dimension(width, height));
@@ -34,16 +35,21 @@ public abstract class Canvas extends JLabel {
     hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
     offScreenGraphics2D.addRenderingHints(hints);
+    offScreenGraphics2D.setStroke(new BasicStroke(1.5f / pixelsPerCell));
+
+    // flip Y axis and scale properly
+    offScreenGraphics2D.translate(0, getHeight());
+    offScreenGraphics2D.scale(pixelsPerCell, -pixelsPerCell);
 
     this.imageIcon = new ImageIcon(onScreenBufferedImage);
     setIcon(imageIcon);
   }
 
-  public Canvas(int height, int width) {
-    this(height, width, Color.white);
+  public Graphics2D graphics2D() {
+    return offScreenGraphics2D;
   }
 
-  public abstract void paint(Graphics2D graphics2D, Canvas canvas);
+  public abstract void paint(Canvas canvas);
 
   protected void paintComponent(Graphics graphics) {
     super.paintComponent(graphics);
@@ -53,7 +59,7 @@ public abstract class Canvas extends JLabel {
     offScreenGraphics2D.fillRect(0, 0, width, height);
 
     // Draw on canvas
-    paint(offScreenGraphics2D, this);
+    paint(this);
   }
 
   public void update() {
@@ -70,5 +76,46 @@ public abstract class Canvas extends JLabel {
   @Override
   public int getWidth() {
     return width;
+  }
+
+  public static class Builder {
+    int rows = 20, columns = 20, pixelsPerCell = 5;
+    Color color = Color.white;
+    Consumer<Canvas> paint = canvas -> {
+    };
+
+    public Builder setRows(int rows) {
+      this.rows = rows;
+      return this;
+    }
+
+    public Builder setColumns(int columns) {
+      this.columns = columns;
+      return this;
+    }
+
+    public Builder setPixelsPerCell(int pixelsPerCell) {
+      this.pixelsPerCell = pixelsPerCell;
+      return this;
+    }
+
+    public Builder setBackground(Color color) {
+      this.color = color;
+      return this;
+    }
+
+    public Builder setPaint(Consumer<Canvas> paint) {
+      this.paint = paint;
+      return this;
+    }
+
+    public Canvas build() {
+      return new Canvas(rows, columns, pixelsPerCell, color) {
+        @Override
+        public void paint(Canvas canvas) {
+          paint.accept(canvas);
+        }
+      };
+    }
   }
 }

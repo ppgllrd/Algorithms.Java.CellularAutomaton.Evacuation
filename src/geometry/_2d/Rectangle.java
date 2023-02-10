@@ -1,3 +1,9 @@
+package geometry._2d;
+
+import gui.Canvas;
+
+import java.awt.*;
+
 /**
  * Simple axis aligned rectangle.
  *
@@ -37,41 +43,49 @@ public record Rectangle(int bottom, int left, int height, int width) {
   }
 
   public int manhattanDistance(int row, int column) {
-    var left = column < this.left;
-    var right = this.right() < column;
-    var bottom = row < this.bottom;
-    var top = this.top() < row;
+    var atLeft = column < this.left;
+    var atRight = this.right() < column;
+    var atBottom = row < this.bottom;
+    var atTop = this.top() < row;
 
-    if (top && left) {
+    if (atTop && atLeft) {
       return dist(this.left, this.top(), column, row);
     }
-    if (left && bottom) {
+    if (atLeft && atBottom) {
       return dist(this.left, this.bottom, column, row);
     }
-    if (bottom && right) {
+    if (atBottom && atRight) {
       return dist(this.right(), this.bottom, column, row);
     }
-    if (right && top) {
+    if (atRight && atTop) {
       return dist(this.right(), this.top(), column, row);
     }
-    if (left) {
+    if (atLeft) {
       return this.left - column;
     }
-    if (right) {
+    if (atRight) {
       return column - this.right();
     }
-    if (bottom) {
+    if (atBottom) {
       return this.bottom - row;
     }
-    if (top) {
+    if (atTop) {
       return row - this.top();
     }
-
     // rectangles intersect
     return 0;
   }
 
   public int manhattanDistance(Location location) {
     return manhattanDistance(location.row(), location.column());
+  }
+
+  public void paint(Canvas canvas, Color fillColor, Color outlineColor) {
+    var graphics2D = canvas.graphics2D();
+
+    graphics2D.setColor(fillColor);
+    graphics2D.fillRect(left(), bottom(), width(), height());
+    graphics2D.setColor(outlineColor);
+    graphics2D.drawRect(left(), bottom(), width(), height());
   }
 }
