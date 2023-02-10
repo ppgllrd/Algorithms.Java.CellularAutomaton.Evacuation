@@ -3,8 +3,10 @@ import gui.Frame;
 import util.Random;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Basic Cellular Automata for simulating pedestrian evacuation.
@@ -12,12 +14,9 @@ import java.util.List;
  * @author Pepe Gallardo
  */
 public class CellularAutomata {
-  private final int rows;
-  private final int columns;
-  private final double cellDimension;
+  private final Scenario scenario;
   private final int[][] riskMatrix;
 
-  private record Location(int row, int column) { }
   private record Movement(Location location, double desirability) implements Comparable<Movement> {
     @Override
     public int compareTo(Movement that) {
@@ -25,72 +24,34 @@ public class CellularAutomata {
     }
   }
 
-  private enum Cell {Empty, Occupied, Blocked}
-  private Cell[][] cells;
-  private Cell[][] nextCells;
-
-  private final Set<Location> exits;
+  private Cell[][] agentsLocations, agentsNextLocations;
 
   private final Random random;
 
   private int numberOfAgents;
-  private int ticks;
+  private int numberOfTicks;
 
-  public CellularAutomata(int rows, int columns, double cellDimension) {
-    if (rows <= 0) {
-      throw new IllegalArgumentException("rows must be greater that 0");
-    }
-    if (columns <= 0) {
-      throw new IllegalArgumentException("columns must be greater that 0");
-    }
-    if (cellDimension <= 0) {
-      throw new IllegalArgumentException("cellDimension must be greater that 0");
-    }
-    this.rows = rows;
-    this.columns = columns;
-    this.cellDimension = cellDimension;
-    this.cells = new Cell[rows][columns];
-    this.nextCells = new Cell[rows][columns];
-    this.exits = new HashSet<>();
-    this.riskMatrix = new int[rows][columns];
+  public CellularAutomata(Scenario scenario) {
+    this.scenario = scenario;
+    this.agentsLocations = new Cell[scenario.getRows()][scenario.getColumns()];
+    clearCells(agentsLocations);
+    this.agentsNextLocations = new Cell[scenario.getRows()][scenario.getColumns()];
+    this.riskMatrix = new int[scenario.getRows()][scenario.getColumns()];
     this.random = Random.getInstance();
-    clearCells();
   }
 
-  public void clearCells() {
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < columns; j++) {
-        cells[i][j] = Cell.Empty;
-      }
+  private void clearCells(Cell[][] cells) {
+    for (var cell : cells) {
+      Arrays.fill(cell, Cell.Empty);
     }
-  }
-
-  public void blockCellAt(int i, int j) {
-    if (i < 0 || i >= rows) {
-      throw new IllegalArgumentException("block(). Wrong row coordinate.");
-    }
-    if (j < 0 || j >= columns) {
-      throw new IllegalArgumentException("block(). Wrong column coordinate.");
-    }
-    cells[i][j] = Cell.Blocked;
-  }
-
-  public void setExitAt(int i, int j) {
-    if (i < 0 || i >= rows) {
-      throw new IllegalArgumentException("setExitAt(). Wrong row coordinate.");
-    }
-    if (j < 0 || j >= columns) {
-      throw new IllegalArgumentException("setExitAt(). Wrong column coordinate.");
-    }
-    exits.add(new Location(i, j));
   }
 
   private void computeRiskMatrix() {
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < columns; j++) {
+    for (int i = 0; i < scenario.getRows(); i++) {
+      for (int j = 0; j < scenario.getColumns(); j++) {
         int risk = Integer.MAX_VALUE;
-        for (var exit : exits) {
-          int distance = Math.abs(i - exit.row) + Math.abs(j - exit.column);
+        for (var exit : scenario.exits()) {
+          int distance = exit.manhattanDistance(i, j);
           if (distance < risk) {
             risk = distance;
           }
@@ -100,29 +61,32 @@ public class CellularAutomata {
     }
   }
 
+  private boolean isEmpty(int i, int j) {
+    return agentsLocations[i][j] == Cell.Empty && !scenario.isBlocked(i, j);
+  }
+
+  private boolean isAndWillBeEmpty(int i, int j) {
+    return isEmpty(i, j) && agentsNextLocations[i][j] == Cell.Empty; // not really a cellular automata as we use next state
+  }
+
   private List<Location> neighborhood(int i, int j) {
     var neighbours = new ArrayList<Location>(4);
-
     // north
-    if (i < rows - 1 && cells[i + 1][j] == Cell.Empty && nextCells[i + 1][j] == Cell.Empty) {
+    if (i < scenario.getRows() - 1 && isAndWillBeEmpty(i + 1, j)) {
       neighbours.add(new Location(i + 1, j));
     }
-
     // south
-    if (i > 0 && cells[i - 1][j] == Cell.Empty && nextCells[i - 1][j] == Cell.Empty) {
+    if (i > 0 && isAndWillBeEmpty(i - 1, j)) {
       neighbours.add(new Location(i - 1, j));
     }
-
     // east
-    if (j < columns - 1 && cells[i][j + 1] == Cell.Empty && nextCells[i][j + 1] == Cell.Empty) {
+    if (j < scenario.getColumns() - 1 && isAndWillBeEmpty(i, j + 1)) {
       neighbours.add(new Location(i, j + 1));
     }
-
     // west
-    if (j > 0 && cells[i][j - 1] == Cell.Empty && nextCells[i][j - 1] == Cell.Empty) {
+    if (j > 0 && isAndWillBeEmpty(i, j - 1)) {
       neighbours.add(new Location(i, j - 1));
     }
-
     return neighbours;
   }
 
@@ -130,16 +94,16 @@ public class CellularAutomata {
     var neighborhood = neighborhood(i, j);
     var movements = new ArrayList<Movement>(neighborhood.size());
     for (var neighbour : neighborhood) {
-      double repulsion = riskMatrix[neighbour.row][neighbour.column];
+      double repulsion = riskMatrix[neighbour.row()][neighbour.column()];
 
-      var around = neighborhood(neighbour.row, neighbour.column);
+      var around = neighborhood(neighbour.row(), neighbour.column());
       // keep only empty neighbours
-      around.removeIf(location -> cells[location.row][location.column] != Cell.Empty);
+      around.removeIf(location -> agentsLocations[location.row()][location.column()] != Cell.Empty);
       if (around.isEmpty()) {
         // all neighbours of new cell are occupied or blocked
-        repulsion *= 1.75;
+        repulsion *= 2.0;
       }
-      var bias = -0.35;
+      var bias = -0.75;
       var desirability = Math.exp(bias * repulsion);
       movements.add(new Movement(neighbour, desirability));
     }
@@ -151,6 +115,7 @@ public class CellularAutomata {
     if (movements.isEmpty()) {
       return Optional.empty();
     }
+
     // choose one according to discrete distribution of desirabilities
     double sum = 0.0;
     for (var move : movements) {
@@ -165,7 +130,6 @@ public class CellularAutomata {
         return Optional.of(move.location);
       }
     }
-
     // not reached
     return Optional.empty();
   }
@@ -173,75 +137,59 @@ public class CellularAutomata {
   private void placeRandomAgents(int numberOfAgentsToPlace) {
     numberOfAgents = 0;
     while (numberOfAgents < numberOfAgentsToPlace) {
-      int i = random.nextInt(rows);
-      int j = random.nextInt(columns);
-      if (cells[i][j] == Cell.Empty) {
-        cells[i][j] = Cell.Occupied;
+      int i = random.nextInt(scenario.getRows());
+      int j = random.nextInt(scenario.getColumns());
+      if (isEmpty(i, j)) {
+        agentsLocations[i][j] = Cell.Occupied;
         numberOfAgents++;
       }
     }
   }
 
-  private boolean isExit(Location location) {
-    return exits.contains(location);
-  }
-
   public void tick() {
-    // copy Blocked cells to new state
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < columns; j++) {
-        if (cells[i][j] == Cell.Blocked) {
-          nextCells[i][j] = Cell.Blocked;
-        } else {
-          nextCells[i][j] = Cell.Empty;
-        }
-      }
-    }
+    // clear new state
+    clearCells(agentsNextLocations);
 
     // move each agent
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < columns; j++) {
-        if (cells[i][j] == Cell.Occupied) {
-          if (isExit(new Location(i, j))) {
+    for (int i = 0; i < scenario.getRows(); i++) {
+      for (int j = 0; j < scenario.getColumns(); j++) {
+        if (agentsLocations[i][j] == Cell.Occupied) {
+          if (scenario.isExit(i, j)) {
             numberOfAgents--; // agent exits scenario
           } else {
             var optional = moveAgentAt(i, j);
             if (optional.isPresent()) {
               var location = optional.get();
-              nextCells[location.row][location.column] = Cell.Occupied;
+              agentsNextLocations[location.row()][location.column()] = Cell.Occupied;
             } else {
               // don't move
-              nextCells[i][j] = Cell.Occupied;
+              agentsNextLocations[i][j] = Cell.Occupied;
             }
           }
         }
       }
     }
-    // make nextCells new state
-    var temp = cells;
-    cells = nextCells;
-    nextCells = temp;
 
-    ticks++;
+    // make nextCells new state
+    var temp = agentsLocations;
+    agentsLocations = agentsNextLocations;
+    agentsNextLocations = temp;
+
+    numberOfTicks++;
   }
 
   private class RunThread extends Thread {
     Canvas canvas;
-    int numberOfAgents;
 
-    public RunThread(Canvas canvas, int numberOfAgents) {
+    public RunThread(Canvas canvas) {
       this.canvas = canvas;
-      this.numberOfAgents = numberOfAgents;
     }
 
     public void run() {
-      computeRiskMatrix();
-      placeRandomAgents(numberOfAgents);
-      ticks = 0;
-      while (CellularAutomata.this.numberOfAgents > 0) {
+      numberOfTicks = 0;
+      while (numberOfAgents > 0) {
         tick();
         if (canvas != null) {
-          // canvas.repaint();
           canvas.update();
           try {
             Thread.sleep(50); // wait some milliseconds
@@ -249,23 +197,28 @@ public class CellularAutomata {
           }
         }
       }
-      System.out.println(ticks);
+      if (canvas != null) {
+        canvas.update();
+      }
+      System.out.println(numberOfTicks);
     }
   }
 
   private void run(int numberOfAgents, boolean gui) {
     if (gui) {
       int pixelsPerCell = 8;
-      var canvas = new Canvas(columns * pixelsPerCell, rows * pixelsPerCell) {
+      var canvas = new Canvas(scenario.getColumns() * pixelsPerCell, scenario.getRows() * pixelsPerCell) {
         @Override
         public void paint(Graphics2D graphics2D, Canvas canvas) {
           CellularAutomata.this.paint(graphics2D, canvas);
         }
       };
       var frame = new Frame(canvas);
-      new RunThread(canvas, numberOfAgents).start();
+      computeRiskMatrix();
+      placeRandomAgents(numberOfAgents);
+      new RunThread(canvas).start();
     } else {
-      new RunThread(null, numberOfAgents).start();
+      new RunThread(null).start();
     }
   }
 
@@ -290,34 +243,19 @@ public class CellularAutomata {
   void paint(Graphics2D graphics2D, Canvas canvas) {
     var wc = canvas.getWidth();
     var hc = canvas.getHeight();
-    var dimc = Math.min(wc, hc);
 
-    var w = columns;
-    var h = rows;
-    var dim = Math.max(w, h);
+    var scale = Math.min(wc / scenario.getColumns(), hc / scenario.getRows());
+    var diameter = scale;
 
-    var sc = wc / columns;
+    scenario.paint(graphics2D, canvas);
 
-    var diameter = sc;
-
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < columns; j++) {
-        if (cells[i][j] == Cell.Occupied) {
-          graphics2D.setColor(Color.blue);
-          graphics2D.fillOval(j * sc, (rows - 1 - i) * sc, diameter, diameter);
-        } else if (cells[i][j] == Cell.Empty) {
-          // graphics2D.setColor(Color.LIGHT_GRAY);
-          // graphics2D.fillOval(j * sc, (rows - 1 - i) * sc, diameter, diameter);
-        } else {
-          graphics2D.setColor(Color.red);
-          graphics2D.fillRect(j * sc, (rows - 1 - i) * sc, diameter, diameter);
+    graphics2D.setColor(Color.blue);
+    for (int i = 0; i < scenario.getRows(); i++) {
+      for (int j = 0; j < scenario.getColumns(); j++) {
+        if (agentsLocations[i][j] == Cell.Occupied) {
+          graphics2D.fillOval(j * scale, (scenario.getRows() - 1 - i) * scale, diameter, diameter);
         }
       }
-    }
-
-    graphics2D.setColor(Color.green);
-    for (var location : exits) {
-      graphics2D.fillRect(location.column * sc, (rows - 1 - location.row) * sc, diameter, diameter);
     }
   }
 }
