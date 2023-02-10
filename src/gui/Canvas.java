@@ -10,13 +10,13 @@ import java.awt.image.BufferedImage;
  * @author Pepe Gallardo
  */
 public abstract class Canvas extends JLabel {
-  private final int width, height;
+  private final int height, width;
   private final Color backgroundColor;
   private final BufferedImage offScreenBufferedImage, onScreenBufferedImage;
   private final Graphics2D offScreenGraphics2D, onScreenGraphics2D;
   private final ImageIcon imageIcon;
 
-  public Canvas(int width, int height, Color backgroundColor) {
+  public Canvas(int height, int width, Color backgroundColor) {
     super();
 
     this.width = width;
@@ -39,8 +39,8 @@ public abstract class Canvas extends JLabel {
     setIcon(imageIcon);
   }
 
-  public Canvas(int width, int height) {
-    this(width, height, Color.white);
+  public Canvas(int height, int width) {
+    this(height, width, Color.white);
   }
 
   public abstract void paint(Graphics2D graphics2D, Canvas canvas);
@@ -63,12 +63,12 @@ public abstract class Canvas extends JLabel {
   }
 
   @Override
-  public int getWidth() {
-    return width;
+  public int getHeight() {
+    return height;
   }
 
   @Override
-  public int getHeight() {
-    return height;
+  public int getWidth() {
+    return width;
   }
 }

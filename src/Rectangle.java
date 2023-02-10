@@ -1,13 +1,13 @@
 /**
  * Simple axis aligned rectangle.
  *
- * @param left   left coordinate of rectangle
  * @param bottom bottom coordinate of rectangle
- * @param width  width of rectangle
+ * @param left   left coordinate of rectangle
  * @param height height of rectangle
+ * @param width  width of rectangle
  * @author Pepe Gallardo
  */
-public record Rectangle(int left, int bottom, int width, int height) {
+public record Rectangle(int bottom, int left, int height, int width) {
   public int top() {
     return bottom + height - 1;
   }

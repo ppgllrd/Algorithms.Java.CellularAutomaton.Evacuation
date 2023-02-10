@@ -41,8 +41,8 @@ public class CellularAutomata {
   }
 
   private void clearCells(Cell[][] cells) {
-    for (var cell : cells) {
-      Arrays.fill(cell, Cell.Empty);
+    for (var row : cells) {
+      Arrays.fill(row, Cell.Empty);
     }
   }
 
@@ -207,7 +207,7 @@ public class CellularAutomata {
   private void run(int numberOfAgents, boolean gui) {
     if (gui) {
       int pixelsPerCell = 8;
-      var canvas = new Canvas(scenario.getColumns() * pixelsPerCell, scenario.getRows() * pixelsPerCell) {
+      var canvas = new Canvas(scenario.getRows() * pixelsPerCell, scenario.getColumns() * pixelsPerCell) {
         @Override
         public void paint(Graphics2D graphics2D, Canvas canvas) {
           CellularAutomata.this.paint(graphics2D, canvas);

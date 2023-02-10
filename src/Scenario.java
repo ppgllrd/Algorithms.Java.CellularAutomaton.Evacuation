@@ -33,7 +33,7 @@ public class Scenario {
     this.columns = columns;
     this.cellDimension = cellDimension;
 
-    this.boundingBox = new Rectangle(0, 0, columns, rows);
+    this.boundingBox = new Rectangle(0, 0, rows, columns);
 
     this.grid = new Cell[rows][columns];
     for (Cell[] row : grid) {

@@ -16,11 +16,11 @@ class Main {
 
     var scenario = new Scenario(rows, columns, 0.5);
 
-    var exits = new java.util.HashSet<>(Set.of(new Rectangle(columns - 1, 2, 1, 5), new Rectangle(columns - 1,
-        rows - 7, 1, 5), new Rectangle(0, 10, 1, 5), new Rectangle(0, rows - 15, 1, 5)));
+    var exits = new java.util.HashSet<>(Set.of(new Rectangle(2, columns - 1, 5, 1), new Rectangle(rows - 7,
+        columns - 1, 5, 1), new Rectangle(10, 0, 5, 1), new Rectangle(rows - 15, 0, 5, 1)));
 
     if (random.bernoulli(0.5)) {
-      exits.add(new Rectangle(columns / 2, rows / 2, 2, 2));
+      exits.add(new Rectangle(rows / 2, columns / 2, 2, 2));
     }
 
     for (var exit : exits) {
@@ -37,8 +37,8 @@ class Main {
       var row = random.nextInt(0, 1 + rows - height);
       var column = random.nextInt(0, 1 + columns - width);
 
-      var newBlock = new Rectangle(column, row, width, height);
-      var border = new Rectangle(column - 2, row - 2, width + 4, height + 4);
+      var newBlock = new Rectangle(row, column, height, width);
+      var border = new Rectangle(row - 2, column - 2, height + 4, width + 4);
 
       var place = true;
       for (var exit : exits) {
