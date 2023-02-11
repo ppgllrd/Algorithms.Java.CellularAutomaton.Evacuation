@@ -37,10 +37,10 @@ class Main {
       scenario.setExit(new Rectangle(10, 0, 5, 1));
     }
     if (random.bernoulli(0.9)) {
-      scenario.setExit(new Rectangle(2, columns - 1, 5, 1));
+      scenario.setExit(new Rectangle(rows - 15, 0, 5, 1));
     }
     if (random.bernoulli(0.5)) {
-      scenario.setExit(new Rectangle(rows - 15, 0, 5, 1));
+      scenario.setExit(new Rectangle(rows / 2, columns / 2, 2, 2));
     }
 
     // place blocks
@@ -73,8 +73,8 @@ class Main {
     while (numberOfAgentsPlaced < numberOfAgents) {
       var row = random.nextInt(rows);
       var column = random.nextInt(columns);
-      var riskAttraction = -random.nextDouble(0.50, 0.90);
-      var crowdRepulsion = random.nextDouble(1.05, 1.90);
+      var riskAttraction = -random.nextDouble(0.50, 1.00);
+      var crowdRepulsion = random.nextDouble(1.00, 2.50);
       var parameters = new AgentParameters(riskAttraction, crowdRepulsion);
 
       if (automata.addAgent(row, column, parameters)) {
