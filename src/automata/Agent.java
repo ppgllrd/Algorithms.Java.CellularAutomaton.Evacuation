@@ -24,7 +24,7 @@ public class Agent {
   private int numberOfSteps; // number of steps taken
   private int exitTime; // ticks elapsed at exit time
 
-  private AgentParameters parameters;
+  private final AgentParameters parameters;
   private final CellularAutomata automata;
 
   private record Movement(Location location, double desirability) implements Comparable<Movement> {

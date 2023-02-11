@@ -39,7 +39,7 @@ public class Scenario {
     this.columns = columns;
     this.cellDimension = cellDimension;
 
-    this.boundingBox = new geometry._2d.Rectangle(0, 0, rows, columns);
+    this.boundingBox = new Rectangle(0, 0, rows, columns);
 
     this.blocked = new boolean[rows][columns];
     for (boolean[] row : blocked) {
@@ -83,14 +83,7 @@ public class Scenario {
     return cellDimension;
   }
 
-  public void setExit(geometry._2d.Rectangle rectangle) {
-    if (!boundingBox.contains(rectangle)) {
-      throw new IllegalArgumentException("setExit: exit is out of bounds of scenario");
-    }
-    exits.add(rectangle);
-  }
-
-  public void setBlock(geometry._2d.Rectangle rectangle) {
+  public void setBlock(Rectangle rectangle) {
     if (!boundingBox.contains(rectangle)) {
       throw new IllegalArgumentException("setBlock: block is out of bounds of scenario");
     }
@@ -101,6 +94,25 @@ public class Scenario {
         blocked[i][j] = true;
       }
     }
+  }
+
+  public Iterable<Rectangle> blocks() {
+    return blocks;
+  }
+
+  boolean isBlocked(int row, int column) {
+    return blocked[row][column];
+  }
+
+  boolean isBlocked(Location location) {
+    return isBlocked(location.row(), location.column());
+  }
+
+  public void setExit(Rectangle rectangle) {
+    if (!boundingBox.contains(rectangle)) {
+      throw new IllegalArgumentException("setExit: exit is out of bounds of scenario");
+    }
+    exits.add(rectangle);
   }
 
   public Iterable<Rectangle> exits() {
@@ -118,18 +130,6 @@ public class Scenario {
 
   boolean isExit(Location location) {
     return isExit(location.row(), location.column());
-  }
-
-  public Iterable<Rectangle> blocks() {
-    return blocks;
-  }
-
-  boolean isBlocked(int row, int column) {
-    return blocked[row][column];
-  }
-
-  boolean isBlocked(Location location) {
-    return isBlocked(location.row(), location.column());
   }
 
   private static final Color
