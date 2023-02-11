@@ -18,10 +18,12 @@ public class Scenario {
   private final int rows, columns;
   private final double cellDimension;
 
-  private final geometry._2d.Rectangle boundingBox;
+  private final Rectangle boundingBox;
   private final Cell[][] grid;
 
-  private final Set<geometry._2d.Rectangle> exits, blocks;
+  private final Set<Rectangle> exits, blocks;
+
+  private final int[][] riskMatrix;
 
   public Scenario(int rows, int columns, double cellDimension) {
     if (rows <= 0) {
@@ -46,6 +48,27 @@ public class Scenario {
 
     exits = new HashSet<>();
     blocks = new HashSet<>();
+
+    this.riskMatrix = new int[rows][columns];
+  }
+
+  public void computeRisks() {
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < columns; j++) {
+        int risk = Integer.MAX_VALUE;
+        for (var exit : exits()) {
+          int distance = exit.manhattanDistance(i, j);
+          if (distance < risk) {
+            risk = distance;
+          }
+        }
+        riskMatrix[i][j] = risk;
+      }
+    }
+  }
+
+  public int risk(int row, int column) {
+    return riskMatrix[row][column];
   }
 
   public int getRows() {
@@ -95,6 +118,10 @@ public class Scenario {
 
   boolean isExit(Location location) {
     return isExit(location.row(), location.column());
+  }
+
+  public Iterable<Rectangle> blocks() {
+    return blocks;
   }
 
   boolean isBlocked(int row, int column) {

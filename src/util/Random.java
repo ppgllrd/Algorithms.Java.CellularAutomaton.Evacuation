@@ -24,8 +24,8 @@ public class Random extends java.util.Random {
   /**
    * Returns {@code true} with probability {@code p} or {@code false} with probability 1 - {@code p}.
    *
-   * @param p
-   * @return
+   * @param p probability of choosing {@code true}.
+   * @return {@code true} with probability {@code p} or {@code false} with probability 1 - {@code p}.
    */
   public boolean bernoulli(double p) {
     if (p < 0.0 || p > 1.0) {

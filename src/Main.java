@@ -1,10 +1,9 @@
+import automata.AgentParameters;
 import automata.CellularAutomata;
 import automata.Scenario;
 import geometry._2d.Rectangle;
 import util.Random;
 
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Main simulation class.
@@ -12,30 +11,42 @@ import java.util.Set;
  * @author Pepe Gallardo
  */
 class Main {
+  private static boolean intersects(Iterable<Rectangle> iterable, Rectangle rectangle) {
+    for (var element : iterable) {
+      if (element.intersects(rectangle)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static void main(String[] args) {
     var random = Random.getInstance();
 
     int rows = 40, columns = 120;
     var scenario = new Scenario(rows, columns, 0.5);
 
-    var exits = new java.util.HashSet<>(
-        Set.of(new Rectangle(2, columns - 1, 5, 1),
-            new Rectangle(rows - 7, columns - 1, 5, 1),
-            new Rectangle(10, 0, 5, 1),
-            new Rectangle(rows - 15, 0, 5, 1)));
-
+    // place exits
+    if (random.bernoulli(0.9)) {
+      scenario.setExit(new Rectangle(2, columns - 1, 5, 1));
+    }
+    if (random.bernoulli(0.9)) {
+      scenario.setExit(new Rectangle(rows - 7, columns - 1, 5, 1));
+    }
+    if (random.bernoulli(0.9)) {
+      scenario.setExit(new Rectangle(10, 0, 5, 1));
+    }
+    if (random.bernoulli(0.9)) {
+      scenario.setExit(new Rectangle(2, columns - 1, 5, 1));
+    }
     if (random.bernoulli(0.5)) {
-      exits.add(new Rectangle(rows / 2, columns / 2, 2, 2));
+      scenario.setExit(new Rectangle(rows - 15, 0, 5, 1));
     }
 
-    for (var exit : exits) {
-      scenario.setExit(exit);
-    }
-
+    // place blocks
     int numberOfBlocks = random.nextInt(20, 80);
-    var blocks = new HashSet<Rectangle>();
-
-    while (numberOfBlocks > 0) {
+    int numberOfBlocksPlaced = 0;
+    while (numberOfBlocksPlaced < numberOfBlocks) {
       var width = 1 + random.nextInt(20);
       var height = 1 + random.nextInt(Math.max(1, rows / (2 * width)));
 
@@ -45,33 +56,33 @@ class Main {
       var newBlock = new Rectangle(row, column, height, width);
       var border = new Rectangle(row - 2, column - 2, height + 4, width + 4);
 
-      var place = true;
-      for (var exit : exits) {
-        if (exit.intersects(border)) {
-          place = false;
-          break;
-        }
-      }
-      if (place) {
-        for (var block : blocks) {
-          if (block.intersects(border)) {
-            place = false;
-            break;
-          }
-        }
-      }
+      var shoulBePlaced = !intersects(scenario.exits(), border)
+          && !intersects(scenario.blocks(), border);
 
-      if (place) {
+      if (shoulBePlaced) {
         scenario.setBlock(newBlock);
-        blocks.add(newBlock);
-        numberOfBlocks--;
+        numberOfBlocksPlaced++;
       }
     }
 
-    var cellularAutomata = new CellularAutomata(scenario);
+    var automata = new CellularAutomata(scenario);
 
-    var numberOfAgents = random.nextInt(250, 500);
-    cellularAutomata.runGUI(numberOfAgents);
-    // cellularAutomata.run(numberOfAgents);
+    // place agents
+    var numberOfAgents = random.nextInt(300, 600);
+    var numberOfAgentsPlaced = 0;
+    while (numberOfAgentsPlaced < numberOfAgents) {
+      var row = random.nextInt(rows);
+      var column = random.nextInt(columns);
+      var riskAttraction = -random.nextDouble(0.50, 0.90);
+      var crowdRepulsion = random.nextDouble(1.05, 1.90);
+      var parameters = new AgentParameters(riskAttraction, crowdRepulsion);
+
+      if (automata.addAgent(row, column, parameters)) {
+        numberOfAgentsPlaced++;
+      }
+    }
+
+    automata.runGUI();
+    // automata.run();
   }
 }
