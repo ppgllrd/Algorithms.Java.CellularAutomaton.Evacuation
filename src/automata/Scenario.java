@@ -19,7 +19,7 @@ public class Scenario {
   private final double cellDimension;
 
   private final Rectangle boundingBox;
-  private final Cell[][] grid;
+  private final boolean[][] blocked;
 
   private final Set<Rectangle> exits, blocks;
 
@@ -41,9 +41,9 @@ public class Scenario {
 
     this.boundingBox = new geometry._2d.Rectangle(0, 0, rows, columns);
 
-    this.grid = new Cell[rows][columns];
-    for (Cell[] row : grid) {
-      Arrays.fill(row, Cell.Empty);
+    this.blocked = new boolean[rows][columns];
+    for (boolean[] row : blocked) {
+      Arrays.fill(row, false);
     }
 
     exits = new HashSet<>();
@@ -98,7 +98,7 @@ public class Scenario {
 
     for (int i = rectangle.bottom(); i <= rectangle.top(); i++) {
       for (int j = rectangle.left(); j <= rectangle.right(); j++) {
-        grid[i][j] = Cell.Blocked;
+        blocked[i][j] = true;
       }
     }
   }
@@ -125,7 +125,7 @@ public class Scenario {
   }
 
   boolean isBlocked(int row, int column) {
-    return grid[row][column] == Cell.Blocked;
+    return blocked[row][column];
   }
 
   boolean isBlocked(Location location) {
