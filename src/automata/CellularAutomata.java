@@ -3,7 +3,6 @@ package automata;
 import geometry._2d.Location;
 import gui.Canvas;
 import gui.Frame;
-import statistics.Random;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -17,8 +16,6 @@ import java.util.List;
  * @author Pepe Gallardo
  */
 public class CellularAutomata {
-  private final static Random random = Random.getInstance();
-
   private final Scenario scenario;
   private boolean[][] agentAt, agentAtNext;
 

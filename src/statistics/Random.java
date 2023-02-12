@@ -11,14 +11,14 @@ import java.util.random.RandomGeneratorFactory;
  * @author Pepe Gallardo.
  */
 public class Random implements RandomGenerator {
-  private final static Random instance = new Random();
+  public final static Random random = new Random();
 
   private final static RandomGeneratorFactory<RandomGenerator> factory =
       RandomGeneratorFactory.of("Xoshiro256PlusPlus");
   private static RandomGenerator generator = factory.create();
 
   public static Random getInstance() {
-    return instance;
+    return random;
   }
 
   @Override

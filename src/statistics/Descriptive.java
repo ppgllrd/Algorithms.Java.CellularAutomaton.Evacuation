@@ -1,6 +1,6 @@
 package statistics;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -9,7 +9,7 @@ import java.util.HashMap;
  * @author Pepe Gallardo
  */
 public class Descriptive {
-  static double sum(Iterable<Double> data) {
+  static double sum(double[] data) {
     double sum = 0.0;
     for (var element : data) {
       sum += element;
@@ -17,7 +17,7 @@ public class Descriptive {
     return sum;
   }
 
-  static double maximum(Iterable<Double> data) {
+  static double maximum(double[] data) {
     double max = Double.MIN_VALUE;
     for (var element : data) {
       if (element > max) {
@@ -27,7 +27,7 @@ public class Descriptive {
     return max;
   }
 
-  static double minimum(Iterable<Double> data) {
+  static double minimum(double[] data) {
     double min = Double.MAX_VALUE;
     for (var element : data) {
       if (element < min) {
@@ -37,8 +37,8 @@ public class Descriptive {
     return min;
   }
 
-  static double mean(Iterable<Double> data) {
-    if (!data.iterator().hasNext()) {
+  static double mean(double[] data) {
+    if (data.length == 0) {
       throw new IllegalArgumentException("mean: data cannot be empty");
     }
     double sum = 0.0;
@@ -50,11 +50,11 @@ public class Descriptive {
     return sum / len;
   }
 
-  static double variance(Iterable<Double> data) {
-    if (!data.iterator().hasNext()) {
+  static double variance(double[] data) {
+    if (data.length == 0) {
       throw new IllegalArgumentException("variance: data cannot be empty");
     }
-    double sum = 0;
+    double sum = 0.0;
     double sumSqr = 0.0;
     int len = 0;
     for (var element : data) {
@@ -66,12 +66,12 @@ public class Descriptive {
     return (sumSqr - len * mean * mean) / (len - 1);
   }
 
-  static double standardDeviation(Iterable<Double> data) {
+  static double standardDeviation(double[] data) {
     return Math.sqrt(variance(data));
   }
 
-  static double variancePopulation(Iterable<Double> data) {
-    if (!data.iterator().hasNext()) {
+  static double variancePopulation(double[] data) {
+    if (data.length == 0) {
       throw new IllegalArgumentException("variancePopulation: data cannot be empty");
     }
     double sum = 0;
@@ -86,11 +86,11 @@ public class Descriptive {
     return (sumSqr - len * mean * mean) / len;
   }
 
-  static double standardDeviationPopulation(Iterable<Double> data) {
+  static double standardDeviationPopulation(double[] data) {
     return Math.sqrt(variancePopulation(data));
   }
 
-  static double midRange(Iterable<Double> data) {
+  static double midRange(double[] data) {
     return (maximum(data) + minimum(data)) / 2.0;
   }
 
@@ -118,26 +118,21 @@ public class Descriptive {
     return mode;
   }
 
-  private static class Selection {
-    ArrayList<Double> arrayList;
-    int length, k;
+  private static class Selection<T extends Comparable<? super T>> {
+    T[] data;
 
-    Selection(Iterable<Double> data, int k) {
-      this.k = k;
-      this.arrayList = new ArrayList<>();
-      for (var element : data) {
-        arrayList.add(element);
-      }
-      this.length = arrayList.size();
+    Selection(T[] data) {
+      this.data = Arrays.copyOf(data, data.length);
     }
 
     void swap(int i, int j) {
-      var temp = arrayList.get(i);
-      arrayList.set(i, arrayList.get(j));
-      arrayList.set(j, temp);
+      var temp = data[i];
+      data[i] = data[j];
+      data[j] = temp;
     }
 
-    double run() {
+    T select(int k) {
+      var length = data.length;
       var left = 0;
       var right = length - 1;
 
@@ -147,7 +142,7 @@ public class Descriptive {
 
         if (right <= leftPlus1) {
           // 1 or 2 elements
-          if (right == leftPlus1 && arrayList.get(left) > arrayList.get(right)) {
+          if (right == leftPlus1 && data[left].compareTo(data[right]) > 0) {
             // 2 elements
             swap(left, right);
           }
@@ -158,30 +153,30 @@ public class Descriptive {
           // Set median of left, mid, and right elements as pivot.
           // Force data(left) ≤ data(leftPlus1) and data(right) ≥ data(leftPlus1)
           swap(mid, leftPlus1);
-          if (arrayList.get(left) > arrayList.get(right)) {
+          if (data[left].compareTo(data[right]) > 0) {
             swap(left, right);
           }
 
-          if (arrayList.get(leftPlus1) > arrayList.get(right)) {
+          if (data[leftPlus1].compareTo(data[right]) > 0) {
             swap(leftPlus1, right);
           }
 
-          if (arrayList.get(left) > arrayList.get(leftPlus1)) {
+          if (data[left].compareTo(data[leftPlus1]) > 0) {
             swap(left, leftPlus1);
           }
 
           var i = leftPlus1;
           var j = right;
-          var pivot = arrayList.get(leftPlus1);
+          var pivot = data[leftPlus1];
 
           var partitioned = false;
           do {
             do {
               i += 1;
-            } while (pivot > arrayList.get(i));
+            } while (pivot.compareTo(data[i]) > 0);
             do {
               j -= 1;
-            } while (arrayList.get(j) > pivot);
+            } while (data[j].compareTo(pivot) > 0);
             if (i <= j) {
               swap(i, j);
             } else {
@@ -189,8 +184,8 @@ public class Descriptive {
             }
           } while (!partitioned);
 
-          arrayList.set(leftPlus1, arrayList.get(j));
-          arrayList.set(j, pivot);
+          data[leftPlus1] = data[j];
+          data[j] = pivot;
 
           if (j >= k) {
             right = j - 1;
@@ -200,35 +195,30 @@ public class Descriptive {
           }
         }
       }
-      return arrayList.get(k);
+      return data[k];
     }
   }
 
-  private static double linearInterpolation(Iterable<Double> data, double percentRank) {
+  private static double linearInterpolation(Double[] data, double percentRank) {
+    var selection = new Selection<>(data);
     if (percentRank == 0) {
-      return new Selection(data, 0).run();
+      return selection.select(0);
+    } else if (percentRank == 100) {
+      return selection.select(data.length - 1);
     } else {
-      var length = 0;
-      for (var element : data) {
-        length += 1;
-      }
-      if (percentRank == 100) {
-        return new Selection(data, length - 1).run();
-      } else {
-        var rank = percentRank * (length - 1) / 100;
-        var intPart = (int) rank;
-        var fractPart = rank - intPart;
+      var rank = percentRank * (data.length - 1) / 100;
+      var intPart = (int) rank;
+      var fractPart = rank - intPart;
 
-        var dataIntPart = new Selection(data, intPart).run();
-        var dataIntPartNext = new Selection(data, intPart + 1).run();
+      var dataIntPart = selection.select(intPart);
+      var dataIntPartNext = selection.select(intPart + 1);
 
-        return dataIntPart + fractPart * (dataIntPartNext - dataIntPart);
-      }
+      return dataIntPart + fractPart * (dataIntPartNext - dataIntPart);
     }
   }
 
-  public static double percentile(Iterable<Double> data, double percentRank) {
-    if (!data.iterator().hasNext()) {
+  public static double percentile(Double[] data, double percentRank) {
+    if (data.length == 0) {
       throw new IllegalArgumentException("percentile: data cannot be empty");
     }
     if (percentRank < 0.0 || percentRank > 100.0) {
@@ -237,8 +227,128 @@ public class Descriptive {
     return linearInterpolation(data, percentRank);
   }
 
-  public static double median(Iterable<Double> data) {
-    if (!data.iterator().hasNext()) {
+  public static double median(Double[] data) {
+    if (data.length == 0) {
+      throw new IllegalArgumentException("median: data cannot be empty");
+    }
+    return linearInterpolation(data, 50);
+  }
+
+  static int sum(int[] data) {
+    int sum = 0;
+    for (var element : data) {
+      sum += element;
+    }
+    return sum;
+  }
+
+  static int maximum(int[] data) {
+    int max = Integer.MIN_VALUE;
+    for (var element : data) {
+      if (element > max) {
+        max = element;
+      }
+    }
+    return max;
+  }
+
+  static int minimum(int[] data) {
+    int min = Integer.MAX_VALUE;
+    for (var element : data) {
+      if (element < min) {
+        min = element;
+      }
+    }
+    return min;
+  }
+
+  static double mean(int[] data) {
+    if (data.length == 0) {
+      throw new IllegalArgumentException("mean: data cannot be empty");
+    }
+    int sum = 0;
+    int len = 0;
+    for (var element : data) {
+      sum += element;
+      len += 1;
+    }
+    return (double) sum / len;
+  }
+
+  static double variance(int[] data) {
+    if (data.length == 0) {
+      throw new IllegalArgumentException("variance: data cannot be empty");
+    }
+    int sum = 0;
+    int sumSqr = 0;
+    int len = 0;
+    for (var element : data) {
+      sum += element;
+      sumSqr += element * element;
+      len += 1;
+    }
+    double mean = (double) sum / len;
+    return (sumSqr - len * mean * mean) / (len - 1);
+  }
+
+  static double standardDeviation(int[] data) {
+    return Math.sqrt(variance(data));
+  }
+
+  static double variancePopulation(int[] data) {
+    if (data.length == 0) {
+      throw new IllegalArgumentException("variancePopulation: data cannot be empty");
+    }
+    int sum = 0;
+    int sumSqr = 0;
+    int len = 0;
+    for (var element : data) {
+      sum += element;
+      sumSqr += element * element;
+      len += 1;
+    }
+    double mean = (double) sum / len;
+    return (sumSqr - len * mean * mean) / len;
+  }
+
+  static double standardDeviationPopulation(int[] data) {
+    return Math.sqrt(variancePopulation(data));
+  }
+
+  static double midRange(int[] data) {
+    return (maximum(data) + minimum(data)) / 2.0;
+  }
+
+  private static double linearInterpolation(Integer[] data, double percentRank) {
+    var selection = new Selection<>(data);
+    if (percentRank == 0) {
+      return selection.select(0);
+    } else if (percentRank == 100) {
+      return selection.select(data.length - 1);
+    } else {
+      var rank = percentRank * (data.length - 1) / 100;
+      var intPart = (int) rank;
+      var fractPart = rank - intPart;
+
+      var dataIntPart = selection.select(intPart);
+      var dataIntPartNext = selection.select(intPart + 1);
+
+      return dataIntPart + fractPart * (dataIntPartNext - dataIntPart);
+    }
+  }
+
+  public static double percentile(Integer[] data, double percentRank) {
+    if (data.length == 0) {
+      throw new IllegalArgumentException("percentile: data cannot be empty");
+    }
+    if (percentRank < 0.0 || percentRank > 100.0) {
+      throw new IllegalArgumentException("percentile: percentRank must be in [0,100]");
+    }
+    return linearInterpolation(data, percentRank);
+  }
+
+  public static double median(Integer[] data) {
+    if (data.length == 0) {
       throw new IllegalArgumentException("median: data cannot be empty");
     }
     return linearInterpolation(data, 50);

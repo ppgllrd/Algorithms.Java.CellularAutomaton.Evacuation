@@ -2,13 +2,14 @@ package automata;
 
 import geometry._2d.Location;
 import gui.Canvas;
-import statistics.Random;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
+
+import static statistics.Random.random;
 
 /**
  * An agent in the simulation.
@@ -17,7 +18,6 @@ import java.util.StringJoiner;
  */
 public class Agent {
   private static int nextIdentifier = 0;
-  private final static Random random = Random.getInstance();
 
   private final int identifier; // each agent has a unique identifier
   private int row, column; // current location

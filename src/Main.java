@@ -2,7 +2,8 @@ import automata.AgentParameters;
 import automata.CellularAutomata;
 import automata.Scenario;
 import geometry._2d.Rectangle;
-import statistics.Random;
+
+import static statistics.Random.random;
 
 
 /**
@@ -21,7 +22,6 @@ class Main {
   }
 
   public static void main(String[] args) {
-    var random = Random.getInstance();
     random.setSeed();
 
     int rows = 40, columns = 120;
