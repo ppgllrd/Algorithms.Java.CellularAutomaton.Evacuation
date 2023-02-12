@@ -2,23 +2,36 @@ package statistics;
 
 import java.util.Collection;
 import java.util.function.Function;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
 
 /**
  * Class providing a global random generator by using Singleton Design Pattern.
  *
  * @author Pepe Gallardo.
  */
-public class Random extends java.util.Random {
-  private static Random instance;
+public class Random implements RandomGenerator {
+  private final static Random instance = new Random();
 
-  private Random() {
-  }
+  private final static RandomGeneratorFactory<RandomGenerator> factory =
+      RandomGeneratorFactory.of("Xoshiro256PlusPlus");
+  private static RandomGenerator generator = factory.create();
 
   public static Random getInstance() {
-    if (instance == null) {
-      instance = new Random();
-    }
     return instance;
+  }
+
+  @Override
+  public long nextLong() {
+    return generator.nextLong();
+  }
+
+  public void setSeed() {
+    generator = factory.create();
+  }
+
+  public void setSeed(long seed) {
+    generator = factory.create(seed);
   }
 
   /**

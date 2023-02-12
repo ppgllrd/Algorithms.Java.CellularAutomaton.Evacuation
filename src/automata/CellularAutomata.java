@@ -188,18 +188,8 @@ public class CellularAutomata {
     run(false);
   }
 
-  public void run(long seed) {
-    random.setSeed(seed);
-    run();
-  }
-
   public void runGUI() {
     run(true);
-  }
-
-  public void runGUI(long seed) {
-    random.setSeed(seed);
-    runGUI();
   }
 
   private static final Color
