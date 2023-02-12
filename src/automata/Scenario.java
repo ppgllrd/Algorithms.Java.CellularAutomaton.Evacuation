@@ -19,11 +19,14 @@ public class Scenario {
   private final double cellDimension;
 
   private final Rectangle boundingBox;
-  private final boolean[][] blocked;
+
+  private enum CellStatus {Blocked, Clear, Exit}
+
+  private final CellStatus[][] cell;
 
   private final Set<Rectangle> exits, blocks;
 
-  private final int[][] riskMatrix;
+  private final int[][] staticFloorField;
 
   public Scenario(int rows, int columns, double cellDimension) {
     if (rows <= 0) {
@@ -41,34 +44,49 @@ public class Scenario {
 
     this.boundingBox = new Rectangle(0, 0, rows, columns);
 
-    this.blocked = new boolean[rows][columns];
-    for (boolean[] row : blocked) {
-      Arrays.fill(row, false);
+    this.cell = new CellStatus[rows][columns];
+    for (CellStatus[] row : cell) {
+      Arrays.fill(row, CellStatus.Clear);
     }
 
     exits = new HashSet<>();
     blocks = new HashSet<>();
 
-    this.riskMatrix = new int[rows][columns];
+    this.staticFloorField = new int[rows][columns];
   }
 
-  public void computeRisks() {
+  public void computeStaticFloorField() {
+    // for each cell compute distance to the closest exit
+    var maxDistance = Integer.MIN_VALUE;
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < columns; j++) {
-        int risk = Integer.MAX_VALUE;
+        staticFloorField[i][j] = Integer.MAX_VALUE;
         for (var exit : exits) {
           int distance = exit.manhattanDistance(i, j);
-          if (distance < risk) {
-            risk = distance;
+          if (distance < staticFloorField[i][j]) {
+            staticFloorField[i][j] = distance;
+            if (distance > maxDistance) {
+              maxDistance = distance;
+            }
           }
         }
-        riskMatrix[i][j] = risk;
+      }
+    }
+
+    // normalize, so that the closer to an exit the larger the static field
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < columns; j++) {
+        staticFloorField[i][j] = maxDistance - staticFloorField[i][j];
       }
     }
   }
 
-  public int risk(int row, int column) {
-    return riskMatrix[row][column];
+  public int getStaticFloorField(int row, int column) {
+    return staticFloorField[row][column];
+  }
+
+  public int getStaticFloorField(Location location) {
+    return getStaticFloorField(location.row(), location.column());
   }
 
   public int getRows() {
@@ -91,7 +109,7 @@ public class Scenario {
 
     for (int i = rectangle.bottom(); i <= rectangle.top(); i++) {
       for (int j = rectangle.left(); j <= rectangle.right(); j++) {
-        blocked[i][j] = true;
+        cell[i][j] = CellStatus.Blocked;
       }
     }
   }
@@ -101,7 +119,7 @@ public class Scenario {
   }
 
   boolean isBlocked(int row, int column) {
-    return blocked[row][column];
+    return cell[row][column] == CellStatus.Blocked;
   }
 
   boolean isBlocked(Location location) {
@@ -113,6 +131,12 @@ public class Scenario {
       throw new IllegalArgumentException("setExit: exit is out of bounds of scenario");
     }
     exits.add(rectangle);
+
+    for (int i = rectangle.bottom(); i <= rectangle.top(); i++) {
+      for (int j = rectangle.left(); j <= rectangle.right(); j++) {
+        cell[i][j] = CellStatus.Exit;
+      }
+    }
   }
 
   public Iterable<Rectangle> exits() {
@@ -120,12 +144,7 @@ public class Scenario {
   }
 
   boolean isExit(int row, int column) {
-    for (var exit : exits) {
-      if (exit.intersects(row, column)) {
-        return true;
-      }
-    }
-    return false;
+    return cell[row][column] == CellStatus.Exit;
   }
 
   boolean isExit(Location location) {

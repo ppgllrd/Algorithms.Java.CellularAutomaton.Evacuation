@@ -1,6 +1,7 @@
 import automata.AgentParameters;
 import automata.CellularAutomata;
 import automata.Scenario;
+import automata.neighbourhood.MooreNeighbourhood;
 import geometry._2d.Rectangle;
 
 import static statistics.Random.random;
@@ -66,7 +67,9 @@ class Main {
       }
     }
 
-    var automata = new CellularAutomata(scenario);
+    // we will use Moore's neighbourhood
+    var neighbourhood = MooreNeighbourhood.forScenario(scenario);
+    var automata = new CellularAutomata(scenario, neighbourhood);
 
     // place agents
     var numberOfAgents = random.nextInt(300, 600);
@@ -74,9 +77,9 @@ class Main {
     while (numberOfAgentsPlaced < numberOfAgents) {
       var row = random.nextInt(rows);
       var column = random.nextInt(columns);
-      var riskAttraction = -random.nextDouble(0.50, 1.00);
-      var crowdRepulsion = random.nextDouble(1.00, 2.50);
-      var parameters = new AgentParameters(riskAttraction, crowdRepulsion);
+      var exitsAttraction = random.nextDouble(0.75, 2.00);
+      var crowdRepulsion = random.nextDouble(1.00, 1.50);
+      var parameters = new AgentParameters(exitsAttraction, crowdRepulsion);
 
       if (automata.addAgent(row, column, parameters)) {
         numberOfAgentsPlaced++;

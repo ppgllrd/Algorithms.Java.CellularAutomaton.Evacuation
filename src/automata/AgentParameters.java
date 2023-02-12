@@ -1,4 +1,4 @@
 package automata;
 
-public record AgentParameters(double riskBias, double crowdRepulsion) {
+public record AgentParameters(double attractionBias, double crowdRepulsion) {
 }

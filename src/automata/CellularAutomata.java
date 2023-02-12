@@ -1,5 +1,6 @@
 package automata;
 
+import automata.neighbourhood.Neighbourhood;
 import geometry._2d.Location;
 import gui.Canvas;
 import gui.Frame;
@@ -10,6 +11,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static statistics.Random.random;
+
 /**
  * Basic Cellular Automata for simulating pedestrian evacuation.
  *
@@ -17,6 +20,7 @@ import java.util.List;
  */
 public class CellularAutomata {
   private final Scenario scenario;
+  private final Neighbourhood neighbourhood;
   private boolean[][] agentAt, agentAtNext;
 
   private final AgentFactory agentFactory;
@@ -24,8 +28,9 @@ public class CellularAutomata {
 
   private int numberOfTicks;
 
-  public CellularAutomata(Scenario scenario) {
+  public CellularAutomata(Scenario scenario, Neighbourhood neighbourhood) {
     this.scenario = scenario;
+    this.neighbourhood = neighbourhood;
     this.agentAt = new boolean[scenario.getRows()][scenario.getColumns()];
     clearCells(agentAt);
     this.agentAtNext = new boolean[scenario.getRows()][scenario.getColumns()];
@@ -42,8 +47,16 @@ public class CellularAutomata {
     }
   }
 
+  public int getRows() {
+    return scenario.getRows();
+  }
+
+  public int getColumns() {
+    return scenario.getColumns();
+  }
+
   public boolean addAgent(int row, int column, AgentParameters parameters) {
-    if (isCellEmpty(row, column)) {
+    if (isCellReachable(row, column)) {
       var agent = agentFactory.newAgent(row, column, parameters);
       agentAt[row][column] = true;
       inScenarioAgents.add(agent);
@@ -57,43 +70,36 @@ public class CellularAutomata {
     return addAgent(location.row(), location.column(), parameters);
   }
 
-  public List<Location> neighborhood(int i, int j) {
-    var neighbours = new ArrayList<Location>(4);
-    // north
-    if (i < scenario.getRows() - 1) {
-      neighbours.add(new Location(i + 1, j));
-    }
-    // south
-    if (i > 0) {
-      neighbours.add(new Location(i - 1, j));
-    }
-    // east
-    if (j < scenario.getColumns() - 1) {
-      neighbours.add(new Location(i, j + 1));
-    }
-    // west
-    if (j > 0) {
-      neighbours.add(new Location(i, j - 1));
-    }
-    return neighbours;
+  public List<Location> neighbours(int row, int column) {
+    return neighbourhood.neighbours(row, column);
   }
 
-  public boolean isCellEmpty(int i, int j) {
-    return !agentAt[i][j] && !scenario.isBlocked(i, j);
+  public List<Location> neighbours(Location location) {
+    return neighbours(location.row(), location.column());
   }
 
-  public boolean isCellEmpty(Location location) {
-    return isCellEmpty(location.row(), location.column());
+  public boolean isCellOccupied(int row, int column) {
+    return agentAt[row][column];
   }
 
-  private boolean isCellEmptyAndWillBeEmpty(int i, int j) {
-    return isCellEmpty(i, j) && !agentAtNext[i][j]; // not really a cellular automata as we use next state
+  public boolean isCellOccupied(Location location) {
+    return isCellOccupied(location.row(), location.column());
   }
 
-  public List<Location> emptyNeighborhood(int i, int j) {
-    var neighbours = neighborhood(i, j);
-    neighbours.removeIf(location -> !isCellEmptyAndWillBeEmpty(location.row(), location.column()));
-    return neighbours;
+  public boolean isCellReachable(int row, int column) {
+    return !agentAt[row][column] && !scenario.isBlocked(row, column);
+  }
+
+  public boolean isCellReachable(Location location) {
+    return isCellReachable(location.row(), location.column());
+  }
+
+  public boolean willBeOccupied(int row, int column) {
+    return agentAtNext[row][column];
+  }
+
+  public boolean willBeOccupied(Location location) {
+    return willBeOccupied(location.row(), location.column());
   }
 
   public Scenario getScenario() {
@@ -106,6 +112,9 @@ public class CellularAutomata {
 
     // move each agent
     synchronized (inScenarioAgents) {
+      // in order to process agents in random order
+      random.shuffle(inScenarioAgents);
+
       var agentsIterator = inScenarioAgents.iterator();
       while (agentsIterator.hasNext()) {
         var agent = agentsIterator.next();
@@ -118,13 +127,18 @@ public class CellularAutomata {
           outOfScenarioAgents.add(agent);
           agentsIterator.remove();
         } else {
-          agent.randomMove().ifPresentOrElse(
-              // move to new location
+          agent.chooseMovement().ifPresentOrElse(
               location -> {
-                agentAtNext[location.row()][location.column()] = true;
-                agent.moveTo(location);
+                if (willBeOccupied(location)) {
+                  // new location already taken by another agent. Don't move
+                  agentAtNext[row][column] = true;
+                } else {
+                  // move to new location
+                  agentAtNext[location.row()][location.column()] = true;
+                  agent.moveTo(location);
+                }
               },
-              // no new location. Don't move
+              // no new location to consider. Don't move
               () -> agentAtNext[row][column] = true
           );
         }
@@ -146,7 +160,7 @@ public class CellularAutomata {
     }
 
     public void run() {
-      scenario.computeRisks();
+      scenario.computeStaticFloorField();
       numberOfTicks = 0;
       while (!inScenarioAgents.isEmpty()) {
         tick();

@@ -1,6 +1,7 @@
 package statistics;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 import java.util.random.RandomGenerator;
 import java.util.random.RandomGeneratorFactory;
@@ -77,5 +78,16 @@ public class Random implements RandomGenerator {
     // not reached
     assert false;
     return null;
+  }
+
+  private static <T> void swap(List<T> list, int i, int j) {
+    list.set(i, list.set(j, list.get(i)));
+  }
+
+  public void shuffle(List<?> list) {
+    int size = list.size();
+    for (int i = size; i > 1; i--) {
+      swap(list, i - 1, nextInt(i));
+    }
   }
 }

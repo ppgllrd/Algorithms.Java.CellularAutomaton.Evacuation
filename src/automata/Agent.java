@@ -27,9 +27,9 @@ public class Agent {
   private final AgentParameters parameters;
   private final CellularAutomata automata;
 
-  private record Movement(Location location, double desirability) implements Comparable<Movement> {
+  private record TentativeMovement(Location location, double desirability) implements Comparable<TentativeMovement> {
     @Override
-    public int compareTo(Movement that) {
+    public int compareTo(TentativeMovement that) {
       return Double.compare(this.desirability, that.desirability);
     }
   }
@@ -81,38 +81,47 @@ public class Agent {
     return exitTime;
   }
 
-  private List<Movement> possibleMovements() {
-    var neighborhood = automata.emptyNeighborhood(row, column);
-    var movements = new ArrayList<Movement>(neighborhood.size());
+  private List<TentativeMovement> tentativeMovements() {
     Scenario scenario = automata.getScenario();
-    for (var neighbour : neighborhood) {
-      double repulsion = scenario.risk(neighbour.row(), neighbour.column());
+    var neighbours = automata.neighbours(row, column);
+    var movements = new ArrayList<TentativeMovement>(neighbours.size());
 
-      // count empty cells around new location
-      var numberOfEmptyCellsAround = 0;
-      for (var around : automata.emptyNeighborhood(neighbour.row(), neighbour.column())) {
-        if (automata.isCellEmpty(around)) {
-          numberOfEmptyCellsAround++;
+    for (var neighbour : neighbours) {
+      if (automata.isCellOccupied(neighbour)) {
+        continue;
+      }
+      if (scenario.isBlocked(neighbour)) {
+        continue;
+      }
+      double attraction = scenario.getStaticFloorField(neighbour);
+
+      // count reachable cells around new location
+      var numberOfReachableCellsAround = 0;
+      for (var around : automata.neighbours(neighbour)) {
+        if (automata.isCellReachable(around)) {
+          numberOfReachableCellsAround++;
+          break;
         }
       }
-      if (numberOfEmptyCellsAround == 0) {
+      if (numberOfReachableCellsAround == 0) {
         // all neighbours of new cell are occupied or blocked
-        repulsion *= parameters.crowdRepulsion();
+        attraction = attraction / parameters.crowdRepulsion();
       }
-      var desirability = Math.exp(parameters.riskBias() * repulsion);
-      movements.add(new Movement(neighbour, desirability));
+      var desirability = Math.exp(parameters.attractionBias() * attraction);
+      movements.add(new TentativeMovement(neighbour, desirability));
     }
     return movements;
   }
 
-  public Optional<Location> randomMove() {
-    var movements = possibleMovements();
+  public Optional<Location> chooseMovement() {
+    var movements = tentativeMovements();
     if (movements.isEmpty()) {
+      // cannot make a movement
       return Optional.empty();
     }
 
     // choose one movement according to discrete distribution of desirabilities
-    var chosen = random.discrete(movements, Movement::desirability);
+    var chosen = random.discrete(movements, TentativeMovement::desirability);
     return Optional.of(chosen.location);
   }
 
