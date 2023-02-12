@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static statistics.Descriptive.mean;
+import static statistics.Descriptive.median;
 import static statistics.Random.random;
 
 /**
@@ -20,6 +22,7 @@ import static statistics.Random.random;
  */
 public class CellularAutomata {
   private final Scenario scenario;
+  private final AutomataParameters parameters;
   private final Neighbourhood neighbourhood;
   private boolean[][] agentAt, agentAtNext;
 
@@ -28,9 +31,10 @@ public class CellularAutomata {
 
   private int numberOfTicks;
 
-  public CellularAutomata(Scenario scenario, Neighbourhood neighbourhood) {
-    this.scenario = scenario;
-    this.neighbourhood = neighbourhood;
+  public CellularAutomata(AutomataParameters parameters) {
+    this.parameters = parameters;
+    this.scenario = parameters.scenario();
+    this.neighbourhood = parameters.neighbourhood();
     this.agentAt = new boolean[scenario.getRows()][scenario.getColumns()];
     clearCells(agentAt);
     this.agentAtNext = new boolean[scenario.getRows()][scenario.getColumns()];
@@ -180,8 +184,9 @@ public class CellularAutomata {
   }
 
   private void run(boolean gui) {
+    Canvas canvas = null;
     if (gui) {
-      var canvas = new Canvas.Builder()
+      canvas = new Canvas.Builder()
           .setRows(scenario.getRows())
           .setColumns(scenario.getColumns())
           .setPixelsPerCell(10)
@@ -189,9 +194,13 @@ public class CellularAutomata {
           .build();
 
       var frame = new Frame(canvas);
-      new RunThread(canvas).start();
-    } else {
-      new RunThread(null).start();
+    }
+    var thread = new RunThread(canvas);
+    thread.start();
+    try {
+      thread.join();
+    } catch (InterruptedException e) {
+      System.out.println("Interrupted!");
     }
   }
 
@@ -201,6 +210,24 @@ public class CellularAutomata {
 
   public void runGUI() {
     run(true);
+  }
+
+  public Statistics computeStatistics() {
+    int numberOfAgents = outOfScenarioAgents.size();
+    int[] steps = new int[numberOfAgents];
+    double[] evacuationTimes = new double[numberOfAgents];
+
+    int i = 0;
+    for (var agent : outOfScenarioAgents) {
+      steps[i] = agent.getNumberOfSteps();
+      evacuationTimes[i] = agent.getExitTime() * parameters.secondsPerTick();
+      i += 1;
+    }
+    double meanSteps = mean(steps);
+    double meanEvacuationTime = mean(evacuationTimes);
+    double medianSteps = median(steps);
+    double medianEvacuationTime = median(evacuationTimes);
+    return new Statistics(meanSteps, meanEvacuationTime, medianSteps, medianEvacuationTime);
   }
 
   private static final Color

@@ -1,6 +1,4 @@
-import automata.AgentParameters;
-import automata.CellularAutomata;
-import automata.Scenario;
+import automata.*;
 import automata.neighbourhood.MooreNeighbourhood;
 import geometry._2d.Rectangle;
 
@@ -26,7 +24,8 @@ class Main {
     random.setSeed();
 
     int rows = 40, columns = 120;
-    var scenario = new Scenario(rows, columns, 0.5);
+    var cellDimension = 0.4; // 0.4 meters
+    var scenario = new Scenario(rows, columns, cellDimension);
 
     // place exits
     if (random.bernoulli(0.9)) {
@@ -46,14 +45,14 @@ class Main {
     }
 
     // place blocks
-    int numberOfBlocks = random.nextInt(20, 80);
+    int numberOfBlocks = random.nextInt(20, 50);
     int numberOfBlocksPlaced = 0;
     while (numberOfBlocksPlaced < numberOfBlocks) {
       var width = 1 + random.nextInt(20);
       var height = 1 + random.nextInt(Math.max(1, rows / (2 * width)));
 
       var row = random.nextInt(0, 1 + rows - height);
-      var column = random.nextInt(0, 1 + columns - width);
+      var column = random.nextInt(3, 1 + columns - width - 3);
 
       var newBlock = new Rectangle(row, column, height, width);
       var border = new Rectangle(row - 2, column - 2, height + 4, width + 4);
@@ -69,7 +68,11 @@ class Main {
 
     // we will use Moore's neighbourhood
     var neighbourhood = MooreNeighbourhood.forScenario(scenario);
-    var automata = new CellularAutomata(scenario, neighbourhood);
+    var pedestrianVelocity = 1.3; // 1.3 m/s
+    var secondsPerTick = pedestrianVelocity * cellDimension;
+
+    var parameters = new AutomataParameters(scenario, neighbourhood, secondsPerTick);
+    var automata = new CellularAutomata(parameters);
 
     // place agents
     var numberOfAgents = random.nextInt(300, 600);
@@ -77,16 +80,18 @@ class Main {
     while (numberOfAgentsPlaced < numberOfAgents) {
       var row = random.nextInt(rows);
       var column = random.nextInt(columns);
-      var exitsAttraction = random.nextDouble(0.75, 2.00);
+      var exitsAttraction = random.nextDouble(0.75, 1.50);
       var crowdRepulsion = random.nextDouble(1.00, 1.50);
-      var parameters = new AgentParameters(exitsAttraction, crowdRepulsion);
+      var agentParameters = new AgentParameters(exitsAttraction, crowdRepulsion);
 
-      if (automata.addAgent(row, column, parameters)) {
+      if (automata.addAgent(row, column, agentParameters)) {
         numberOfAgentsPlaced++;
       }
     }
 
     automata.runGUI();
+    Statistics statistics = automata.computeStatistics();
+    System.out.println(statistics);
     // automata.run();
   }
 }
