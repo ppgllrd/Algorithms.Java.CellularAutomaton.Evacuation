@@ -2,7 +2,7 @@ package automata;
 
 import geometry._2d.Location;
 import gui.Canvas;
-import util.Random;
+import statistics.Random;
 
 import java.awt.*;
 import java.util.ArrayList;

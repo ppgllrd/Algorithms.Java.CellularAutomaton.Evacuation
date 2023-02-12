@@ -2,7 +2,7 @@ import automata.AgentParameters;
 import automata.CellularAutomata;
 import automata.Scenario;
 import geometry._2d.Rectangle;
-import util.Random;
+import statistics.Random;
 
 
 /**

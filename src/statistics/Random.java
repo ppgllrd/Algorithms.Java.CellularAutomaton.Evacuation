@@ -1,4 +1,4 @@
-package util;
+package statistics;
 
 import java.util.Collection;
 import java.util.function.Function;

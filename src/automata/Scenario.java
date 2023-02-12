@@ -56,7 +56,7 @@ public class Scenario {
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < columns; j++) {
         int risk = Integer.MAX_VALUE;
-        for (var exit : exits()) {
+        for (var exit : exits) {
           int distance = exit.manhattanDistance(i, j);
           if (distance < risk) {
             risk = distance;
