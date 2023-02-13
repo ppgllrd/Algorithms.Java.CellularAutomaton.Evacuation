@@ -2,7 +2,7 @@
 
 Pepe Gallardo, 2023
 
-Requieres JDK 17 or higher. See `Main` class for an example.
+Requires JDK 17 or higher. See `Main` class for an example.
 
 ![Random Scenario](images/RandomScenario.png?raw=true "Random Scenario")
 
