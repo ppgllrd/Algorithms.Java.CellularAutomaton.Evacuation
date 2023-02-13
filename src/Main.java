@@ -23,7 +23,6 @@ class Main {
       int rows = 40, columns = 80;
       var cellDimension = 0.4; // 0.4 meters
       scenario = new RandomScenario(rows, columns, cellDimension);
-
     } else {
       scenario = new Supermarket();
     }
