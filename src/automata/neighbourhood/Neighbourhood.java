@@ -5,7 +5,7 @@ import geometry._2d.Location;
 import java.util.List;
 
 /**
- * Class for representing a neighbourhood relationship in a cellular automata.
+ * Class for representing a neighbourhood relationship in a cellular automaton.
  *
  * @author Pepe Gallardo
  */

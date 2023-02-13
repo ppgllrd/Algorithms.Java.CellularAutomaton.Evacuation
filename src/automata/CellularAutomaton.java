@@ -16,28 +16,28 @@ import static statistics.Descriptive.median;
 import static statistics.Random.random;
 
 /**
- * Basic Cellular Automata for simulating pedestrian evacuation.
+ * Basic Cellular Automaton for simulating pedestrian evacuation.
  *
  * @author Pepe Gallardo
  */
-public class CellularAutomata {
+public class CellularAutomaton {
   private final Scenario scenario;
-  private final AutomataParameters parameters;
+  private final CellularAutomatonParameters parameters;
   private final Neighbourhood neighbourhood;
-  private boolean[][] agentAt, agentAtNext;
+  private boolean[][] occupied, occupiedNextState;
 
   private final AgentFactory agentFactory;
   private final List<Agent> inScenarioAgents, outOfScenarioAgents;
 
   private int numberOfTicks;
 
-  public CellularAutomata(AutomataParameters parameters) {
+  public CellularAutomaton(CellularAutomatonParameters parameters) {
     this.parameters = parameters;
     this.scenario = parameters.scenario();
     this.neighbourhood = parameters.neighbourhood();
-    this.agentAt = new boolean[scenario.getRows()][scenario.getColumns()];
-    clearCells(agentAt);
-    this.agentAtNext = new boolean[scenario.getRows()][scenario.getColumns()];
+    this.occupied = new boolean[scenario.getRows()][scenario.getColumns()];
+    clearCells(occupied);
+    this.occupiedNextState = new boolean[scenario.getRows()][scenario.getColumns()];
     this.agentFactory = new AgentFactory(this);
 
     this.inScenarioAgents = Collections.synchronizedList(new ArrayList<>());
@@ -62,7 +62,7 @@ public class CellularAutomata {
   public boolean addAgent(int row, int column, AgentParameters parameters) {
     if (isCellReachable(row, column)) {
       var agent = agentFactory.newAgent(row, column, parameters);
-      agentAt[row][column] = true;
+      occupied[row][column] = true;
       inScenarioAgents.add(agent);
       return true;
     } else {
@@ -83,7 +83,7 @@ public class CellularAutomata {
   }
 
   public boolean isCellOccupied(int row, int column) {
-    return agentAt[row][column];
+    return occupied[row][column];
   }
 
   public boolean isCellOccupied(Location location) {
@@ -91,7 +91,7 @@ public class CellularAutomata {
   }
 
   public boolean isCellReachable(int row, int column) {
-    return !agentAt[row][column] && !scenario.isBlocked(row, column);
+    return !occupied[row][column] && !scenario.isBlocked(row, column);
   }
 
   public boolean isCellReachable(Location location) {
@@ -99,7 +99,7 @@ public class CellularAutomata {
   }
 
   public boolean willBeOccupied(int row, int column) {
-    return agentAtNext[row][column];
+    return occupiedNextState[row][column];
   }
 
   public boolean willBeOccupied(Location location) {
@@ -112,7 +112,7 @@ public class CellularAutomata {
 
   public void tick() {
     // clear new state
-    clearCells(agentAtNext);
+    clearCells(occupiedNextState);
 
     // move each agent
     synchronized (inScenarioAgents) {
@@ -135,23 +135,23 @@ public class CellularAutomata {
               location -> {
                 if (willBeOccupied(location)) {
                   // new location already taken by another agent. Don't move
-                  agentAtNext[row][column] = true;
+                  occupiedNextState[row][column] = true;
                 } else {
                   // move to new location
-                  agentAtNext[location.row()][location.column()] = true;
+                  occupiedNextState[location.row()][location.column()] = true;
                   agent.moveTo(location);
                 }
               },
               // no new location to consider. Don't move
-              () -> agentAtNext[row][column] = true
+              () -> occupiedNextState[row][column] = true
           );
         }
       }
     }
-    // make nextCells new state
-    var temp = agentAt;
-    agentAt = agentAtNext;
-    agentAtNext = temp;
+    // make next state current one
+    var temp = occupied;
+    occupied = occupiedNextState;
+    occupiedNextState = temp;
 
     numberOfTicks++;
   }
@@ -186,12 +186,13 @@ public class CellularAutomata {
   private void run(boolean gui) {
     Canvas canvas = null;
     if (gui) {
-      canvas = new Canvas.Builder()
-          .setRows(scenario.getRows())
-          .setColumns(scenario.getColumns())
-          .setPixelsPerCell(10)
-          .setPaint(CellularAutomata.this::paint)
-          .build();
+      canvas =
+          Canvas.Builder()
+              .rows(scenario.getRows())
+              .columns(scenario.getColumns())
+              .pixelsPerCell(10)
+              .paint(CellularAutomaton.this::paint)
+              .build();
 
       var frame = new Frame(canvas);
     }

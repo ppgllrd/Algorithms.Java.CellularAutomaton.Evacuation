@@ -8,14 +8,14 @@ import geometry._2d.Location;
  * @author Pepe Gallardo
  */
 public class AgentFactory {
-  private final CellularAutomata automata;
+  private final CellularAutomaton automaton;
 
-  public AgentFactory(CellularAutomata automata) {
-    this.automata = automata;
+  public AgentFactory(CellularAutomaton automaton) {
+    this.automaton = automaton;
   }
 
   public Agent newAgent(int row, int column, AgentParameters parameters) {
-    return new Agent(row, column, parameters, automata);
+    return new Agent(row, column, parameters, automaton);
   }
 
   public Agent newAgent(Location location, AgentParameters parameters) {

@@ -66,13 +66,14 @@ class Main {
       }
     }
 
-    // we will use Moore's neighbourhood
-    var neighbourhood = MooreNeighbourhood.forScenario(scenario);
-    var pedestrianVelocity = 1.3; // 1.3 m/s
-    var secondsPerTick = pedestrianVelocity * cellDimension;
+    var parameters =
+        CellularAutomatonParameters.Builder
+            .scenario(scenario)
+            .neighbourhood(MooreNeighbourhood.of(scenario))
+            .pedestrianVelocity(1.3) // 1.3 m/s
+            .build();
 
-    var parameters = new AutomataParameters(scenario, neighbourhood, secondsPerTick);
-    var automata = new CellularAutomata(parameters);
+    var automaton = new CellularAutomaton(parameters);
 
     // place agents
     var numberOfAgents = random.nextInt(300, 600);
@@ -84,14 +85,14 @@ class Main {
       var crowdRepulsion = random.nextDouble(1.00, 1.50);
       var agentParameters = new AgentParameters(exitsAttraction, crowdRepulsion);
 
-      if (automata.addAgent(row, column, agentParameters)) {
+      if (automaton.addAgent(row, column, agentParameters)) {
         numberOfAgentsPlaced++;
       }
     }
 
-    automata.runGUI();
-    Statistics statistics = automata.computeStatistics();
+    automaton.runGUI();
+    Statistics statistics = automaton.computeStatistics();
     System.out.println(statistics);
-    // automata.run();
+    // automaton.run();
   }
 }

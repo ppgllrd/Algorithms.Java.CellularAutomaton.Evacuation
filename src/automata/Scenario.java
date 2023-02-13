@@ -36,7 +36,7 @@ public class Scenario {
       throw new IllegalArgumentException("Scenario: columns should be larger than 0");
     }
     if (cellDimension <= 0) {
-      throw new IllegalArgumentException("automata.Scenario: cellDimension must be greater that 0");
+      throw new IllegalArgumentException("Scenario: cellDimension must be greater that 0");
     }
     this.rows = rows;
     this.columns = columns;

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class for representing Von Neumann's neighbourhood in a cellular automata.
+ * Class for representing Von Neumann's neighbourhood in a cellular automaton.
  *
  * @author Pepe Gallardo
  */
@@ -19,7 +19,7 @@ public class VonNeumannNeighbourhood implements Neighbourhood {
     this.columns = columns;
   }
 
-  public static Neighbourhood forScenario(Scenario scenario) {
+  public static Neighbourhood of(Scenario scenario) {
     return new VonNeumannNeighbourhood(scenario.getRows(), scenario.getColumns());
   }
 

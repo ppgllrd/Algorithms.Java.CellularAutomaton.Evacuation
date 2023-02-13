@@ -78,33 +78,38 @@ public abstract class Canvas extends JLabel {
     return width;
   }
 
-  public static class Builder {
+  public static Builder Builder() {
+    return new Builder();
+  }
+
+  public static final class Builder {
     int rows = 20, columns = 20, pixelsPerCell = 5;
     Color color = Color.white;
     Consumer<Canvas> paint = canvas -> {
     };
 
-    public Builder setRows(int rows) {
+
+    public Builder rows(int rows) {
       this.rows = rows;
       return this;
     }
 
-    public Builder setColumns(int columns) {
+    public Builder columns(int columns) {
       this.columns = columns;
       return this;
     }
 
-    public Builder setPixelsPerCell(int pixelsPerCell) {
+    public Builder pixelsPerCell(int pixelsPerCell) {
       this.pixelsPerCell = pixelsPerCell;
       return this;
     }
 
-    public Builder setBackground(Color color) {
+    public Builder background(Color color) {
       this.color = color;
       return this;
     }
 
-    public Builder setPaint(Consumer<Canvas> paint) {
+    public Builder paint(Consumer<Canvas> paint) {
       this.paint = paint;
       return this;
     }

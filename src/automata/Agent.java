@@ -25,7 +25,7 @@ public class Agent {
   private int exitTime; // ticks elapsed at exit time
 
   private final AgentParameters parameters;
-  private final CellularAutomata automata;
+  private final CellularAutomaton automaton;
 
   private record TentativeMovement(Location location, double desirability) implements Comparable<TentativeMovement> {
     @Override
@@ -34,12 +34,12 @@ public class Agent {
     }
   }
 
-  public Agent(int row, int column, AgentParameters parameters, CellularAutomata automata) {
+  public Agent(int row, int column, AgentParameters parameters, CellularAutomaton automaton) {
     this.identifier = nextIdentifier++;
     this.row = row;
     this.column = column;
     this.parameters = parameters;
-    this.automata = automata;
+    this.automaton = automaton;
     this.numberOfSteps = 0;
   }
 
@@ -82,12 +82,12 @@ public class Agent {
   }
 
   private List<TentativeMovement> tentativeMovements() {
-    Scenario scenario = automata.getScenario();
-    var neighbours = automata.neighbours(row, column);
+    Scenario scenario = automaton.getScenario();
+    var neighbours = automaton.neighbours(row, column);
     var movements = new ArrayList<TentativeMovement>(neighbours.size());
 
     for (var neighbour : neighbours) {
-      if (automata.isCellOccupied(neighbour)) {
+      if (automaton.isCellOccupied(neighbour)) {
         continue;
       }
       if (scenario.isBlocked(neighbour)) {
@@ -97,8 +97,8 @@ public class Agent {
 
       // count reachable cells around new location
       var numberOfReachableCellsAround = 0;
-      for (var around : automata.neighbours(neighbour)) {
-        if (automata.isCellReachable(around)) {
+      for (var around : automaton.neighbours(neighbour)) {
+        if (automaton.isCellReachable(around)) {
           numberOfReachableCellsAround++;
           break;
         }
