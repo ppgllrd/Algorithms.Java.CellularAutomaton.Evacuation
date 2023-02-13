@@ -4,6 +4,7 @@ import automata.Statistics;
 import automata.neighbourhood.MooreNeighbourhood;
 import automata.pedestrian.PedestrianParameters;
 import automata.scenario.Scenario;
+import automata.scenario.examples.RandomScenario;
 import automata.scenario.examples.Supermarket;
 
 import static statistics.Random.random;
@@ -21,7 +22,7 @@ class Main {
     if (random.bernoulli(0.5)) {
       int rows = 40, columns = 80;
       var cellDimension = 0.4; // 0.4 meters
-      scenario = new automata.scenario.examples.RandomScenario(rows, columns, cellDimension);
+      scenario = new RandomScenario(rows, columns, cellDimension);
 
     } else {
       scenario = new Supermarket();
