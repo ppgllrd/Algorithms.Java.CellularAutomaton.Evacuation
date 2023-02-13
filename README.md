@@ -4,4 +4,6 @@ Pepe Gallardo, 2023
 
 Requieres JDK 17 or higher. See `Main` class for an example.
 
-![Screenshot](./Screenshot.png?raw=true "Screenshot")
+![Random Scenario](images/RandomScenario.png?raw=true "Random Scenario")
+
+![automata.scenario.examples.Supermarket](images/Supermarket.png?raw=true "automata.scenario.examples.Supermarket")
