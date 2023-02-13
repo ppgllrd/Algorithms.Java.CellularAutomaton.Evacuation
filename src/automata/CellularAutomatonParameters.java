@@ -2,6 +2,7 @@ package automata;
 
 import automata.neighbourhood.Neighbourhood;
 import automata.neighbourhood.VonNeumannNeighbourhood;
+import automata.scenario.Scenario;
 
 /**
  * Class representing parameters for a cellular automaton.

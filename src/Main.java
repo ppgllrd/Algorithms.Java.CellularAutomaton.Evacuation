@@ -3,9 +3,10 @@ import automata.CellularAutomatonParameters;
 import automata.Statistics;
 import automata.neighbourhood.MooreNeighbourhood;
 import automata.pedestrian.PedestrianParameters;
+import automata.scenario.Scenario;
+import automata.scenario.examples.Supermarket;
 
 import static statistics.Random.random;
-
 
 /**
  * Main simulation class.
@@ -16,9 +17,15 @@ class Main {
   public static void main(String[] args) {
     random.setSeed();
 
-    int rows = 40, columns = 120;
-    var cellDimension = 0.4; // 0.4 meters
-    var scenario = new RandomScenario(rows, columns, cellDimension);
+    Scenario scenario;
+    if (random.bernoulli(0.5)) {
+      int rows = 40, columns = 80;
+      var cellDimension = 0.4; // 0.4 meters
+      scenario = new automata.scenario.examples.RandomScenario(rows, columns, cellDimension);
+
+    } else {
+      scenario = new Supermarket();
+    }
 
     var cellularAutomatonParameters =
         CellularAutomatonParameters.Builder
@@ -26,13 +33,13 @@ class Main {
             .secondsTimeLimit(60 * 10) // 10 minutes
             .neighbourhood(MooreNeighbourhood.of(scenario)) // use Moore's Neighbourhood
             .pedestrianVelocity(1.3) // 1.3 m/s
-            .GUITimeFactor(25) // x25 times faster
+            .GUITimeFactor(15) // x15 times faster
             .build();
 
     var automaton = new CellularAutomaton(cellularAutomatonParameters);
 
     // place pedestrians
-    var numberOfPedestrians = random.nextInt(300, 600);
+    var numberOfPedestrians = random.nextInt(150, 300);
     var fieldAttractionBias = random.nextDouble(0.75, 1.50);
     var crowdRepulsion = random.nextDouble(1.00, 1.50);
     var pedestrianParameters =

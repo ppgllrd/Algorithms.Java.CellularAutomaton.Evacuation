@@ -1,4 +1,4 @@
-package automata;
+package automata.scenario;
 
 import geometry._2d.Location;
 import geometry._2d.Rectangle;
@@ -143,11 +143,11 @@ public class Scenario {
     return exits;
   }
 
-  boolean isExit(int row, int column) {
+  public boolean isExit(int row, int column) {
     return cell[row][column] == CellStatus.Exit;
   }
 
-  boolean isExit(Location location) {
+  public boolean isExit(Location location) {
     return isExit(location.row(), location.column());
   }
 
@@ -157,7 +157,7 @@ public class Scenario {
       darkRed = new Color(142, 5, 0),
       lightRed = new Color(179, 6, 0);
 
-  void paint(Canvas canvas) {
+  public void paint(Canvas canvas) {
     for (var exit : exits) {
       exit.paint(canvas, lightGreen, darkGreen);
     }

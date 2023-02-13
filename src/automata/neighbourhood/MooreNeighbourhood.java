@@ -1,6 +1,6 @@
 package automata.neighbourhood;
 
-import automata.Scenario;
+import automata.scenario.Scenario;
 import geometry._2d.Location;
 
 import java.util.ArrayList;

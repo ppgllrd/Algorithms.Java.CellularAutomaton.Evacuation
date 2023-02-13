@@ -36,16 +36,18 @@ public class Random implements RandomGenerator {
   }
 
   /**
-   * Returns {@code true} with probability {@code p} or {@code false} with probability 1 - {@code p}.
+   * Returns {@code true} with probability {@code successProbability} or {@code false} with probability 1 - {@code
+   * successProbability}.
    *
-   * @param p probability of choosing {@code true}.
-   * @return {@code true} with probability {@code p} or {@code false} with probability 1 - {@code p}.
+   * @param successProbability probability of choosing {@code true}.
+   * @return {@code true} with probability {@code successProbability} or {@code false} with probability 1 - {@code
+   * successProbability}.
    */
-  public boolean bernoulli(double p) {
-    if (p < 0.0 || p > 1.0) {
-      throw new IllegalArgumentException("bernoulli: probability " + p + "must be in [0.0, 1.0]");
+  public boolean bernoulli(double successProbability) {
+    if (successProbability < 0.0 || successProbability > 1.0) {
+      throw new IllegalArgumentException("bernoulli: probability " + successProbability + "must be in [0.0, 1.0]");
     }
-    return nextDouble() < p;
+    return nextDouble() < successProbability;
   }
 
   /**
@@ -53,7 +55,7 @@ public class Random implements RandomGenerator {
    *
    * @param collection   collection of elements to choose from.
    * @param desirability function returning desirability of an element.
-   * @param <T>          typecof elements
+   * @param <T>          type of elements
    * @return one random element from collection chosen with probability proportional to its desirability.
    */
   public <T> T discrete(Collection<T> collection, Function<T, Double> desirability) {

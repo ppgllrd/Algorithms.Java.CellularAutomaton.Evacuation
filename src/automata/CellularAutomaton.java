@@ -4,6 +4,7 @@ import automata.neighbourhood.Neighbourhood;
 import automata.pedestrian.Pedestrian;
 import automata.pedestrian.PedestrianFactory;
 import automata.pedestrian.PedestrianParameters;
+import automata.scenario.Scenario;
 import geometry._2d.Location;
 import gui.Canvas;
 import gui.Frame;
@@ -125,7 +126,7 @@ public class CellularAutomaton {
     return scenario;
   }
 
-  public void tick() {
+  public void timeStep() {
     // clear new state
     clearCells(occupiedNextState);
 
@@ -180,13 +181,22 @@ public class CellularAutomaton {
 
     public void run() {
       scenario.computeStaticFloorField();
-
       timeSteps = 0;
       var maximalTimeSteps = parameters.secondsTimeLimit() / parameters.secondsPerTimeStep();
 
+      if (canvas != null) {
+        // show initial configuration for 1.5 seconds
+        paint(canvas);
+        canvas.update();
+        try {
+          Thread.sleep(1500);
+        } catch (Exception ignored) {
+        }
+      }
+
       var millisBefore = System.currentTimeMillis();
       while (!inScenarioPedestrians.isEmpty() && timeSteps < maximalTimeSteps) {
-        tick();
+        timeStep();
         if (canvas != null) {
           canvas.update();
           var elapsedMillis = (System.currentTimeMillis() - millisBefore);
@@ -249,7 +259,11 @@ public class CellularAutomaton {
     double meanEvacuationTime = mean(evacuationTimes);
     double medianSteps = median(steps);
     double medianEvacuationTime = median(evacuationTimes);
-    return new Statistics(meanSteps, meanEvacuationTime, medianSteps, medianEvacuationTime);
+    int numberOfEvacuees = outOfScenarioPedestrians.size();
+    int numberOfNonEvacuees = inScenarioPedestrians.size();
+    return new Statistics(meanSteps, meanEvacuationTime
+        , medianSteps, medianEvacuationTime
+        , numberOfEvacuees, numberOfNonEvacuees);
   }
 
   private static final Color

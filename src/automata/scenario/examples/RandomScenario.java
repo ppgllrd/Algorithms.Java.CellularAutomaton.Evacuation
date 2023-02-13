@@ -1,10 +1,13 @@
-import automata.Scenario;
+package automata.scenario.examples;
+
+import automata.scenario.Scenario;
 import geometry._2d.Rectangle;
 
 import static statistics.Random.random;
 
 /**
  * A class for generating random scenarios
+ *
  * @author Pepe Gallardo
  */
 public class RandomScenario extends Scenario {
