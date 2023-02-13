@@ -34,6 +34,15 @@ public record Rectangle(int bottom, int left, int height, int width) {
     return intersects(location.row(), location.column());
   }
 
+  public boolean intersects(Iterable<Rectangle> iterable) {
+    for (var element : iterable) {
+      if (element.intersects(this)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean contains(Rectangle that) {
     return that.bottom >= this.bottom && that.top() <= this.top() && that.left >= this.left && that.right() <= this.right();
   }

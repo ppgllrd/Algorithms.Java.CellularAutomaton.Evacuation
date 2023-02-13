@@ -118,11 +118,11 @@ public class Scenario {
     return blocks;
   }
 
-  boolean isBlocked(int row, int column) {
+  public boolean isBlocked(int row, int column) {
     return cell[row][column] == CellStatus.Blocked;
   }
 
-  boolean isBlocked(Location location) {
+  public boolean isBlocked(Location location) {
     return isBlocked(location.row(), location.column());
   }
 

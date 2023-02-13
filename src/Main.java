@@ -1,5 +1,9 @@
-import automata.*;
+import automata.CellularAutomaton;
+import automata.CellularAutomatonParameters;
+import automata.Scenario;
+import automata.Statistics;
 import automata.neighbourhood.MooreNeighbourhood;
+import automata.pedestrian.PedestrianParameters;
 import geometry._2d.Rectangle;
 
 import static statistics.Random.random;
@@ -11,15 +15,6 @@ import static statistics.Random.random;
  * @author Pepe Gallardo
  */
 class Main {
-  private static boolean intersects(Iterable<Rectangle> iterable, Rectangle rectangle) {
-    for (var element : iterable) {
-      if (element.intersects(rectangle)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public static void main(String[] args) {
     random.setSeed();
 
@@ -57,8 +52,8 @@ class Main {
       var newBlock = new Rectangle(row, column, height, width);
       var border = new Rectangle(row - 2, column - 2, height + 4, width + 4);
 
-      var shoulBePlaced = !intersects(scenario.exits(), border)
-          && !intersects(scenario.blocks(), border);
+      var shoulBePlaced = !border.intersects(scenario.exits())
+          && !border.intersects(scenario.blocks());
 
       if (shoulBePlaced) {
         scenario.setBlock(newBlock);
@@ -69,26 +64,24 @@ class Main {
     var parameters =
         CellularAutomatonParameters.Builder
             .scenario(scenario)
-            .neighbourhood(MooreNeighbourhood.of(scenario))
+            .secondsTimeLimit(60 * 10) // 10 minutes
+            .neighbourhood(MooreNeighbourhood.of(scenario)) // use Moore's Neighbourhood
             .pedestrianVelocity(1.3) // 1.3 m/s
+            .GUITimeFactor(25) // x25 times faster
             .build();
 
     var automaton = new CellularAutomaton(parameters);
 
-    // place agents
-    var numberOfAgents = random.nextInt(300, 600);
-    var numberOfAgentsPlaced = 0;
-    while (numberOfAgentsPlaced < numberOfAgents) {
-      var row = random.nextInt(rows);
-      var column = random.nextInt(columns);
-      var exitsAttraction = random.nextDouble(0.75, 1.50);
-      var crowdRepulsion = random.nextDouble(1.00, 1.50);
-      var agentParameters = new AgentParameters(exitsAttraction, crowdRepulsion);
-
-      if (automaton.addAgent(row, column, agentParameters)) {
-        numberOfAgentsPlaced++;
-      }
-    }
+    // place pedestrians
+    var numberOfPedestrians = random.nextInt(300, 600);
+    var fieldAttractionBias = random.nextDouble(0.75, 1.50);
+    var crowdRepulsion = random.nextDouble(1.00, 1.50);
+    var pedestrianParameters =
+        PedestrianParameters.Builder()
+            .fieldAttractionBias(fieldAttractionBias)
+            .crowdRepulsion(crowdRepulsion)
+            .build();
+    automaton.addPedestriansUniformly(numberOfPedestrians, pedestrianParameters);
 
     automaton.runGUI();
     Statistics statistics = automaton.computeStatistics();

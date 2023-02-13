@@ -1,6 +1,9 @@
 package automata;
 
 import automata.neighbourhood.Neighbourhood;
+import automata.pedestrian.Pedestrian;
+import automata.pedestrian.PedestrianFactory;
+import automata.pedestrian.PedestrianParameters;
 import geometry._2d.Location;
 import gui.Canvas;
 import gui.Frame;
@@ -26,10 +29,10 @@ public class CellularAutomaton {
   private final Neighbourhood neighbourhood;
   private boolean[][] occupied, occupiedNextState;
 
-  private final AgentFactory agentFactory;
-  private final List<Agent> inScenarioAgents, outOfScenarioAgents;
+  private final PedestrianFactory pedestrianFactory;
+  private final List<Pedestrian> inScenarioPedestrians, outOfScenarioPedestrians;
 
-  private int numberOfTicks;
+  private int timeSteps;
 
   public CellularAutomaton(CellularAutomatonParameters parameters) {
     this.parameters = parameters;
@@ -38,11 +41,11 @@ public class CellularAutomaton {
     this.occupied = new boolean[scenario.getRows()][scenario.getColumns()];
     clearCells(occupied);
     this.occupiedNextState = new boolean[scenario.getRows()][scenario.getColumns()];
-    this.agentFactory = new AgentFactory(this);
+    this.pedestrianFactory = new PedestrianFactory(this);
 
-    this.inScenarioAgents = Collections.synchronizedList(new ArrayList<>());
-    this.outOfScenarioAgents = new ArrayList<>();
-    this.numberOfTicks = 0;
+    this.inScenarioPedestrians = Collections.synchronizedList(new ArrayList<>());
+    this.outOfScenarioPedestrians = new ArrayList<>();
+    this.timeSteps = 0;
   }
 
   private void clearCells(boolean[][] cells) {
@@ -59,19 +62,31 @@ public class CellularAutomaton {
     return scenario.getColumns();
   }
 
-  public boolean addAgent(int row, int column, AgentParameters parameters) {
+  public boolean addPedestrian(int row, int column, PedestrianParameters parameters) {
     if (isCellReachable(row, column)) {
-      var agent = agentFactory.newAgent(row, column, parameters);
+      var pedestrian = pedestrianFactory.getInstance(row, column, parameters);
       occupied[row][column] = true;
-      inScenarioAgents.add(agent);
+      inScenarioPedestrians.add(pedestrian);
       return true;
     } else {
       return false;
     }
   }
 
-  public boolean addAgent(Location location, AgentParameters parameters) {
-    return addAgent(location.row(), location.column(), parameters);
+  public boolean addPedestrian(Location location, PedestrianParameters parameters) {
+    return addPedestrian(location.row(), location.column(), parameters);
+  }
+
+  public void addPedestriansUniformly(int numberOfPedestrians, PedestrianParameters parameters) {
+    var numberOfPedestriansPlaced = 0;
+    while (numberOfPedestriansPlaced < numberOfPedestrians) {
+      var row = random.nextInt(getRows());
+      var column = random.nextInt(getColumns());
+
+      if (addPedestrian(row, column, parameters)) {
+        numberOfPedestriansPlaced++;
+      }
+    }
   }
 
   public List<Location> neighbours(int row, int column) {
@@ -114,32 +129,32 @@ public class CellularAutomaton {
     // clear new state
     clearCells(occupiedNextState);
 
-    // move each agent
-    synchronized (inScenarioAgents) {
-      // in order to process agents in random order
-      random.shuffle(inScenarioAgents);
+    // move each pedestrian
+    synchronized (inScenarioPedestrians) {
+      // in order to process pedestrians in random order
+      random.shuffle(inScenarioPedestrians);
 
-      var agentsIterator = inScenarioAgents.iterator();
-      while (agentsIterator.hasNext()) {
-        var agent = agentsIterator.next();
-        int row = agent.getRow();
-        int column = agent.getColumn();
+      var pedestriansIterator = inScenarioPedestrians.iterator();
+      while (pedestriansIterator.hasNext()) {
+        var pedestrian = pedestriansIterator.next();
+        int row = pedestrian.getRow();
+        int column = pedestrian.getColumn();
 
         if (scenario.isExit(row, column)) {
-          // agent exits scenario
-          agent.setExitTime(numberOfTicks);
-          outOfScenarioAgents.add(agent);
-          agentsIterator.remove();
+          // pedestrian exits scenario
+          pedestrian.setExitTimeSteps(timeSteps);
+          outOfScenarioPedestrians.add(pedestrian);
+          pedestriansIterator.remove();
         } else {
-          agent.chooseMovement().ifPresentOrElse(
+          pedestrian.chooseMovement().ifPresentOrElse(
               location -> {
                 if (willBeOccupied(location)) {
-                  // new location already taken by another agent. Don't move
+                  // new location already taken by another pedestrian. Don't move
                   occupiedNextState[row][column] = true;
                 } else {
                   // move to new location
                   occupiedNextState[location.row()][location.column()] = true;
-                  agent.moveTo(location);
+                  pedestrian.moveTo(location);
                 }
               },
               // no new location to consider. Don't move
@@ -153,7 +168,7 @@ public class CellularAutomaton {
     occupied = occupiedNextState;
     occupiedNextState = temp;
 
-    numberOfTicks++;
+    timeSteps++;
   }
 
   private class RunThread extends Thread {
@@ -165,13 +180,20 @@ public class CellularAutomaton {
 
     public void run() {
       scenario.computeStaticFloorField();
-      numberOfTicks = 0;
-      while (!inScenarioAgents.isEmpty()) {
+
+      timeSteps = 0;
+      var maximalTimeSteps = parameters.secondsTimeLimit() / parameters.secondsPerTimeStep();
+
+      var millisBefore = System.currentTimeMillis();
+      while (!inScenarioPedestrians.isEmpty() && timeSteps < maximalTimeSteps) {
         tick();
         if (canvas != null) {
           canvas.update();
+          var elapsedMillis = (System.currentTimeMillis() - millisBefore);
           try {
-            Thread.sleep(50); // wait some milliseconds
+            // wait some milliseconds to synchronize animation
+            Thread.sleep(((int) (parameters.secondsPerTimeStep() * 1000) - elapsedMillis) / parameters.GUITimeFactor());
+            millisBefore = System.currentTimeMillis();
           } catch (Exception ignored) {
           }
         }
@@ -179,7 +201,6 @@ public class CellularAutomaton {
       if (canvas != null) {
         canvas.update();
       }
-      System.out.println(numberOfTicks);
     }
   }
 
@@ -199,7 +220,7 @@ public class CellularAutomaton {
     var thread = new RunThread(canvas);
     thread.start();
     try {
-      thread.join();
+      thread.join(); // wait for thread to complete
     } catch (InterruptedException e) {
       System.out.println("Interrupted!");
     }
@@ -214,14 +235,14 @@ public class CellularAutomaton {
   }
 
   public Statistics computeStatistics() {
-    int numberOfAgents = outOfScenarioAgents.size();
-    int[] steps = new int[numberOfAgents];
-    double[] evacuationTimes = new double[numberOfAgents];
+    int numberOfPedestrians = outOfScenarioPedestrians.size();
+    int[] steps = new int[numberOfPedestrians];
+    double[] evacuationTimes = new double[numberOfPedestrians];
 
     int i = 0;
-    for (var agent : outOfScenarioAgents) {
-      steps[i] = agent.getNumberOfSteps();
-      evacuationTimes[i] = agent.getExitTime() * parameters.secondsPerTick();
+    for (var pedestrian : outOfScenarioPedestrians) {
+      steps[i] = pedestrian.getNumberOfSteps();
+      evacuationTimes[i] = pedestrian.getExitTimeSteps() * parameters.secondsPerTimeStep();
       i += 1;
     }
     double meanSteps = mean(steps);
@@ -237,9 +258,9 @@ public class CellularAutomaton {
 
   void paint(Canvas canvas) {
     scenario.paint(canvas);
-    synchronized (inScenarioAgents) {
-      for (var agent : inScenarioAgents) {
-        agent.paint(canvas, lightBlue, darkBlue);
+    synchronized (inScenarioPedestrians) {
+      for (var pedestrian : inScenarioPedestrians) {
+        pedestrian.paint(canvas, lightBlue, darkBlue);
       }
     }
   }

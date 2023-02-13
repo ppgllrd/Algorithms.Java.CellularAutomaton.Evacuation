@@ -1,5 +1,6 @@
-package automata;
+package automata.pedestrian;
 
+import automata.CellularAutomaton;
 import geometry._2d.Location;
 import gui.Canvas;
 
@@ -12,19 +13,19 @@ import java.util.StringJoiner;
 import static statistics.Random.random;
 
 /**
- * An agent in the simulation.
+ * A pedestrian in the simulation.
  *
  * @author Pepe Gallardo
  */
-public class Agent {
+public class Pedestrian {
   private static int nextIdentifier = 0;
 
-  private final int identifier; // each agent has a unique identifier
+  private final int identifier; // each pedestrian has a unique identifier
   private int row, column; // current location
   private int numberOfSteps; // number of steps taken
-  private int exitTime; // ticks elapsed at exit time
+  private int exitTimeSteps; // time steps elapsed at exit time
 
-  private final AgentParameters parameters;
+  private final PedestrianParameters parameters;
   private final CellularAutomaton automaton;
 
   private record TentativeMovement(Location location, double desirability) implements Comparable<TentativeMovement> {
@@ -34,7 +35,7 @@ public class Agent {
     }
   }
 
-  public Agent(int row, int column, AgentParameters parameters, CellularAutomaton automaton) {
+  public Pedestrian(int row, int column, PedestrianParameters parameters, CellularAutomaton automaton) {
     this.identifier = nextIdentifier++;
     this.row = row;
     this.column = column;
@@ -73,16 +74,16 @@ public class Agent {
     return numberOfSteps;
   }
 
-  public void setExitTime(int ticks) {
-    this.exitTime = ticks;
+  public void setExitTimeSteps(int timeSteps) {
+    this.exitTimeSteps = timeSteps;
   }
 
-  public int getExitTime() {
-    return exitTime;
+  public int getExitTimeSteps() {
+    return exitTimeSteps;
   }
 
   private List<TentativeMovement> tentativeMovements() {
-    Scenario scenario = automaton.getScenario();
+    var scenario = automaton.getScenario();
     var neighbours = automaton.neighbours(row, column);
     var movements = new ArrayList<TentativeMovement>(neighbours.size());
 
@@ -107,7 +108,7 @@ public class Agent {
         // all neighbours of new cell are occupied or blocked
         attraction = attraction / parameters.crowdRepulsion();
       }
-      var desirability = Math.exp(parameters.attractionBias() * attraction);
+      var desirability = Math.exp(parameters.fieldAttractionBias() * attraction);
       movements.add(new TentativeMovement(neighbour, desirability));
     }
     return movements;
@@ -146,7 +147,7 @@ public class Agent {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Agent that = (Agent) o;
+    Pedestrian that = (Pedestrian) o;
     return identifier == that.identifier;
   }
 
