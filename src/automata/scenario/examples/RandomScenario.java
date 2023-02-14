@@ -45,8 +45,8 @@ public class RandomScenario extends Scenario {
       // so that blocks are apart
       var border = new Rectangle(row - 2, column - 2, height + 4, width + 4);
 
-      var shoulBePlaced = !border.intersects(exits())
-          && !border.intersects(blocks());
+      var shoulBePlaced = !border.intersectsAny(exits())
+          && !border.intersectsAny(blocks());
 
       if (shoulBePlaced) {
         setBlock(newBlock);

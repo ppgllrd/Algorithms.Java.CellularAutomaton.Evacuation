@@ -20,21 +20,53 @@ import static statistics.Descriptive.median;
 import static statistics.Random.random;
 
 /**
- * Basic Cellular Automaton for simulating pedestrian evacuation.
+ * Cellular Automaton for simulating pedestrian evacuation.
  *
  * @author Pepe Gallardo
  */
 public class CellularAutomaton {
-  private final Scenario scenario;
-  private final CellularAutomatonParameters parameters;
-  private final Neighbourhood neighbourhood;
-  private boolean[][] occupied, occupiedNextState;
+  /**
+   * Scenario where simulation takes place.
+   */
+  protected final Scenario scenario;
+  /**
+   * Parameters describing this automaton.
+   */
+  protected final CellularAutomatonParameters parameters;
+  /**
+   * Neighbourhood relationship used by this automaton.
+   */
+  protected final Neighbourhood neighbourhood;
+  /**
+   * {@code true} if cell is occupied by a pedestrian in current discrete state.
+   */
+  protected boolean[][] occupied;
+  /**
+   * {@code true} if cell will be occupied by a pedestrian in next discrete state.
+   */
+  protected boolean[][] occupiedNextState;
+  /**
+   * Factory for generating pedestrians for this automaton.
+   */
+  protected final PedestrianFactory pedestrianFactory;
+  /**
+   * List of pedestrians currently within the scenario.
+   */
+  protected final List<Pedestrian> inScenarioPedestrians;
+  /**
+   * List of pedestrians that have evacuated the scenario.
+   */
+  protected final List<Pedestrian> outOfScenarioPedestrians;
+  /**
+   * Number of discrete time steps elapsed since the start of the simulation.
+   */
+  protected int timeSteps;
 
-  private final PedestrianFactory pedestrianFactory;
-  private final List<Pedestrian> inScenarioPedestrians, outOfScenarioPedestrians;
-
-  private int timeSteps;
-
+  /**
+   * Creates a new Cellular Automaton with provided parameters.
+   *
+   * @param parameters parameters describing this automaton.
+   */
   public CellularAutomaton(CellularAutomatonParameters parameters) {
     this.parameters = parameters;
     this.scenario = parameters.scenario();
@@ -55,14 +87,32 @@ public class CellularAutomaton {
     }
   }
 
+  /**
+   * Number of rows in scenario where this automaton is running.
+   *
+   * @return number of rows in scenario where this automaton is running.
+   */
   public int getRows() {
     return scenario.getRows();
   }
 
+  /**
+   * Number of columns in scenario where this automaton is running.
+   *
+   * @return number of columns in scenario where this automaton is running.
+   */
   public int getColumns() {
     return scenario.getColumns();
   }
 
+  /**
+   * Adds a new pedestrian to this automaton.
+   *
+   * @param row        row of scenario where new pedestrian should be placed.
+   * @param column     column of scenario where new pedestrian should be placed.
+   * @param parameters parameters describing new pedestrian.
+   * @return {@code true} if pedestrian could be created (location was neither blocked nor taken by another pedestrian).
+   */
   public boolean addPedestrian(int row, int column, PedestrianParameters parameters) {
     if (isCellReachable(row, column)) {
       var pedestrian = pedestrianFactory.getInstance(row, column, parameters);
@@ -74,10 +124,23 @@ public class CellularAutomaton {
     }
   }
 
+  /**
+   * Adds a new pedestrian to this automaton.
+   *
+   * @param location   location in scenario where new pedestrian should be placed.
+   * @param parameters parameters describing new pedestrian.
+   * @return {@code true} if pedestrian could be created (location was neither blocked nor taken by another pedestrian).
+   */
   public boolean addPedestrian(Location location, PedestrianParameters parameters) {
     return addPedestrian(location.row(), location.column(), parameters);
   }
 
+  /**
+   * Adds a given number of new pedestrians located uniform randomly among free cells in automaton's scenario.
+   *
+   * @param numberOfPedestrians number of new pedestrian to add.
+   * @param parameters          parameters describing new pedestrians.
+   */
   public void addPedestriansUniformly(int numberOfPedestrians, PedestrianParameters parameters) {
     var numberOfPedestriansPlaced = 0;
     while (numberOfPedestriansPlaced < numberOfPedestrians) {
@@ -90,42 +153,106 @@ public class CellularAutomaton {
     }
   }
 
+  /**
+   * Returns neighbours of a cell in this automaton (will depend on neighbourhood relationship).
+   *
+   * @param row    row of cell.
+   * @param column column of cell.
+   * @return neighbours a cell.
+   */
   public List<Location> neighbours(int row, int column) {
     return neighbourhood.neighbours(row, column);
   }
 
+  /**
+   * Returns neighbours of a cell in this automaton (will depend on neighbourhood relationship).
+   *
+   * @param location location of cell.
+   * @return neighbours a cell.
+   */
   public List<Location> neighbours(Location location) {
     return neighbours(location.row(), location.column());
   }
 
+  /**
+   * Checks whether a cell is occupied by some pedestrian.
+   *
+   * @param row    row of cell to check.
+   * @param column column of cell to check.
+   * @return {@code true} if cell is occupied by some pedestrian.
+   */
   public boolean isCellOccupied(int row, int column) {
     return occupied[row][column];
   }
 
+  /**
+   * Checks whether a cell is occupied by some pedestrian.
+   *
+   * @param location location of cell to check.
+   * @return {@code true} if cell is occupied by some pedestrian.
+   */
   public boolean isCellOccupied(Location location) {
     return isCellOccupied(location.row(), location.column());
   }
 
+  /**
+   * Checks whether a cell can be reached by some pedestrian (i.e. there is no pedestrian occupying the cell and the
+   * cell is not blocked in the scenario).
+   *
+   * @param row    row of cell to check.
+   * @param column column of cell to check.
+   * @return {@code true} if cell can be reached by some pedestrian.
+   */
   public boolean isCellReachable(int row, int column) {
     return !occupied[row][column] && !scenario.isBlocked(row, column);
   }
 
+  /**
+   * Checks whether a cell can be reached by some pedestrian (i.e. there is no pedestrian occupying the cell and the
+   * cell is not blocked in the scenario).
+   *
+   * @param location location of cell to check.
+   * @return {@code true} if cell can be reached by some pedestrian.
+   */
   public boolean isCellReachable(Location location) {
     return isCellReachable(location.row(), location.column());
   }
 
+  /**
+   * Checks whether some pedestrian has decided already to move to a cell in next discrete time step of simulation.
+   *
+   * @param row    row of cell to check.
+   * @param column column of cell to check.
+   * @return {@code true} if some pedestrian has decided already to move to cell in next discrete time step of
+   * simulation.
+   */
   public boolean willBeOccupied(int row, int column) {
     return occupiedNextState[row][column];
   }
 
+  /**
+   * Checks whether some pedestrian has decided already to move to a cell in next discrete time step of simulation.
+   *
+   * @param location location of cell to check.
+   * @return {@code true} if some pedestrian has decided already to move to cell in next discrete time step of
+   * simulation.
+   */
   public boolean willBeOccupied(Location location) {
     return willBeOccupied(location.row(), location.column());
   }
 
+  /**
+   * Scenario where automaton is running.
+   *
+   * @return scenario where automaton is running.
+   */
   public Scenario getScenario() {
     return scenario;
   }
 
+  /**
+   * Runs one discrete time step for this automaton.
+   */
   public void timeStep() {
     // clear new state
     clearCells(occupiedNextState);
@@ -172,6 +299,9 @@ public class CellularAutomaton {
     timeSteps++;
   }
 
+  /**
+   * Thread for running the simulation.
+   */
   private class RunThread extends Thread {
     Canvas canvas;
 
@@ -209,11 +339,17 @@ public class CellularAutomaton {
         }
       }
       if (canvas != null) {
+        // show final configuration
         canvas.update();
       }
     }
   }
 
+  /**
+   * Runs this automaton until end conditions are met.
+   *
+   * @param gui if this parameter is {@code true} the simulation is displayed in a GUI.
+   */
   private void run(boolean gui) {
     Canvas canvas = null;
     if (gui) {
@@ -236,14 +372,25 @@ public class CellularAutomaton {
     }
   }
 
+  /**
+   * Runs this automaton until end conditions are met.
+   */
   public void run() {
     run(false);
   }
 
+  /**
+   * Runs this automaton until end conditions are met and displays simulation in a GUI.
+   */
   public void runGUI() {
     run(true);
   }
 
+  /**
+   * Computes some statistics regarding the execution of the simulation.
+   *
+   * @return statistics collected after running simulation.
+   */
   public Statistics computeStatistics() {
     int numberOfPedestrians = outOfScenarioPedestrians.size();
     int[] steps = new int[numberOfPedestrians];
@@ -270,6 +417,11 @@ public class CellularAutomaton {
       darkBlue = new Color(0, 71, 189),
       lightBlue = new Color(0, 120, 227);
 
+  /**
+   * Paints this automaton in GUI representing the simulation.
+   *
+   * @param canvas Graphical canvas where pedestrian should be drawn.
+   */
   void paint(Canvas canvas) {
     scenario.paint(canvas);
     synchronized (inScenarioPedestrians) {

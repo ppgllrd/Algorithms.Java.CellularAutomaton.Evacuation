@@ -12,12 +12,18 @@ import java.util.random.RandomGeneratorFactory;
  * @author Pepe Gallardo.
  */
 public class Random implements RandomGenerator {
+  /**
+   * Any class can access the global random generator using this object.
+   */
   public final static Random random = new Random();
 
   private final static RandomGeneratorFactory<RandomGenerator> factory =
       RandomGeneratorFactory.of("Xoshiro256PlusPlus");
   private static RandomGenerator generator = factory.create();
 
+  /**
+   * Any class can access the global random generator using this method.
+   */
   public static Random getInstance() {
     return random;
   }
@@ -27,10 +33,18 @@ public class Random implements RandomGenerator {
     return generator.nextLong();
   }
 
+  /**
+   * Initializes the random generator with an arbitrary seed.
+   */
   public void setSeed() {
     generator = factory.create();
   }
 
+  /**
+   * Initializes the random generator with provided seed.
+   *
+   * @param seed seed for initializing random generator.
+   */
   public void setSeed(long seed) {
     generator = factory.create(seed);
   }
@@ -51,7 +65,7 @@ public class Random implements RandomGenerator {
   }
 
   /**
-   * Chooses one element from collection randomly with probability proportional to its desirability.
+   * Chooses randomly one element from collection with probability proportional to its desirability.
    *
    * @param collection   collection of elements to choose from.
    * @param desirability function returning desirability of an element.
@@ -86,6 +100,11 @@ public class Random implements RandomGenerator {
     list.set(i, list.set(j, list.get(i)));
   }
 
+  /**
+   * Randomly shuffles the order of elements in a list.
+   *
+   * @param list list to shuffle.
+   */
   public void shuffle(List<?> list) {
     int size = list.size();
     for (int i = size; i > 1; i--) {

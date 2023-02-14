@@ -5,12 +5,12 @@ import gui.Canvas;
 import java.awt.*;
 
 /**
- * Simple axis aligned rectangle.
+ * Class for representing an axis-aligned rectangle.
  *
- * @param bottom bottom coordinate of rectangle
- * @param left   left coordinate of rectangle
- * @param height height of rectangle
- * @param width  width of rectangle
+ * @param bottom bottom coordinate of rectangle.
+ * @param left   left coordinate of rectangle.
+ * @param height height of rectangle.
+ * @param width  width of rectangle.
  * @author Pepe Gallardo
  */
 public record Rectangle(int bottom, int left, int height, int width) {
@@ -34,7 +34,7 @@ public record Rectangle(int bottom, int left, int height, int width) {
     return intersects(location.row(), location.column());
   }
 
-  public boolean intersects(Iterable<Rectangle> iterable) {
+  public boolean intersectsAny(Iterable<Rectangle> iterable) {
     for (var element : iterable) {
       if (element.intersects(this)) {
         return true;
@@ -47,7 +47,7 @@ public record Rectangle(int bottom, int left, int height, int width) {
     return that.bottom >= this.bottom && that.top() <= this.top() && that.left >= this.left && that.right() <= this.right();
   }
 
-  private int dist(int x1, int y1, int x2, int y2) {
+  private int distance(int x1, int y1, int x2, int y2) {
     return Math.abs(x1 - x2) + Math.abs(y1 - y2);
   }
 
@@ -58,16 +58,16 @@ public record Rectangle(int bottom, int left, int height, int width) {
     var atTop = this.top() < row;
 
     if (atTop && atLeft) {
-      return dist(this.left, this.top(), column, row);
+      return distance(this.left, this.top(), column, row);
     }
     if (atLeft && atBottom) {
-      return dist(this.left, this.bottom, column, row);
+      return distance(this.left, this.bottom, column, row);
     }
     if (atBottom && atRight) {
-      return dist(this.right(), this.bottom, column, row);
+      return distance(this.right(), this.bottom, column, row);
     }
     if (atRight && atTop) {
-      return dist(this.right(), this.top(), column, row);
+      return distance(this.right(), this.top(), column, row);
     }
     if (atLeft) {
       return this.left - column;
@@ -91,7 +91,6 @@ public record Rectangle(int bottom, int left, int height, int width) {
 
   public void paint(Canvas canvas, Color fillColor, Color outlineColor) {
     var graphics2D = canvas.graphics2D();
-
     graphics2D.setColor(fillColor);
     graphics2D.fillRect(left(), bottom(), width(), height());
     graphics2D.setColor(outlineColor);

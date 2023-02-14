@@ -14,11 +14,23 @@ import java.util.List;
 public class VonNeumannNeighbourhood implements Neighbourhood {
   private final int rows, columns;
 
+  /**
+   * Creates a Von Neumann neighbourhood for a scenario.
+   *
+   * @param rows    number of rows in scenario.
+   * @param columns number of columns in scenario.
+   */
   public VonNeumannNeighbourhood(int rows, int columns) {
     this.rows = rows;
     this.columns = columns;
   }
 
+  /**
+   * Creates a Von Neumann neighbourhood for given scenario.
+   *
+   * @param scenario scenario in which neighbourhood is described.
+   * @return a Von Neumann neighbourhood for given scenario.
+   */
   public static Neighbourhood of(Scenario scenario) {
     return new VonNeumannNeighbourhood(scenario.getRows(), scenario.getColumns());
   }
