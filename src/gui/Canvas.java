@@ -60,11 +60,11 @@ public abstract class Canvas extends JLabel {
 
     // Draw on canvas
     paint(this);
+    onScreenGraphics2D.drawImage(offScreenBufferedImage, 0, 0, null);
   }
 
   public void update() {
     // Show canvas on screen
-    onScreenGraphics2D.drawImage(offScreenBufferedImage, 0, 0, null);
     repaint();
   }
 
@@ -78,16 +78,14 @@ public abstract class Canvas extends JLabel {
     return width;
   }
 
-  public static Builder Builder() {
-    return new Builder();
-  }
-
   public static final class Builder {
     int rows = 20, columns = 20, pixelsPerCell = 5;
     Color color = Color.white;
     Consumer<Canvas> paint = canvas -> {
     };
 
+    public Builder() {
+    }
 
     public Builder rows(int rows) {
       this.rows = rows;

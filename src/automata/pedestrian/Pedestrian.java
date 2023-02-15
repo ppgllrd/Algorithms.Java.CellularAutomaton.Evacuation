@@ -189,7 +189,7 @@ public class Pedestrian {
     var movements = new ArrayList<TentativeMovement>(neighbours.size());
     for (var neighbour : neighbours) {
       if (automaton.isCellReachable(neighbour)) {
-        double attraction = scenario.getStaticFloorField(neighbour);
+        double attraction = scenario.getStaticFloorField().getField(neighbour);
 
         // count reachable cells around new location
         var numberOfReachableCellsAround = 0;
@@ -256,7 +256,7 @@ public class Pedestrian {
    * Checks whether this pedestrian is equal to another object.
    *
    * @param o another object to compare to this pedestrian.
-   * @return {@true} this pedestrian is equal to object {@code o}.
+   * @return {@code true} this pedestrian is equal to object {@code o}.
    */
   @Override
   public boolean equals(Object o) {

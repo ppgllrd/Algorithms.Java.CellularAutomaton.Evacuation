@@ -8,15 +8,11 @@ package automata.pedestrian;
  * @author Pepe Gallardo
  */
 public record PedestrianParameters(double fieldAttractionBias, double crowdRepulsion) {
-  public static Builder Builder() {
-    return new Builder();
-  }
+  public static final class Builder {
+    private double fieldAttractionBias = 1.0;
+    private double crowdRepulsion = 1.10;
 
-  public final static class Builder {
-    double fieldAttractionBias = 1.0;
-    double crowdRepulsion = 1.10;
-
-    private Builder() {
+    public Builder() {
     }
 
     public Builder fieldAttractionBias(double fieldAttractionBias) {

@@ -114,6 +114,8 @@ public class CellularAutomaton {
    * @return {@code true} if pedestrian could be created (location was neither blocked nor taken by another pedestrian).
    */
   public boolean addPedestrian(int row, int column, PedestrianParameters parameters) {
+    assert row >= 0 && row < getRows() : "addPedestrian: invalid row";
+    assert column >= 0 && row < getColumns() : "addPedestrian: invalid column";
     if (isCellReachable(row, column)) {
       var pedestrian = pedestrianFactory.getInstance(row, column, parameters);
       occupied[row][column] = true;
@@ -142,6 +144,7 @@ public class CellularAutomaton {
    * @param parameters          parameters describing new pedestrians.
    */
   public void addPedestriansUniformly(int numberOfPedestrians, PedestrianParameters parameters) {
+    assert numberOfPedestrians >= 0 : "addPedestriansUniformly: number of pedestrian cannot be negative";
     var numberOfPedestriansPlaced = 0;
     while (numberOfPedestriansPlaced < numberOfPedestrians) {
       var row = random.nextInt(getRows());
@@ -161,6 +164,8 @@ public class CellularAutomaton {
    * @return neighbours a cell.
    */
   public List<Location> neighbours(int row, int column) {
+    assert row >= 0 && row < getRows() : "neighbours: invalid row";
+    assert column >= 0 && row < getColumns() : "neighbours: invalid column";
     return neighbourhood.neighbours(row, column);
   }
 
@@ -182,6 +187,8 @@ public class CellularAutomaton {
    * @return {@code true} if cell is occupied by some pedestrian.
    */
   public boolean isCellOccupied(int row, int column) {
+    assert row >= 0 && row < getRows() : "isCellOccupied: invalid row";
+    assert column >= 0 && row < getColumns() : "isCellOccupied: invalid column";
     return occupied[row][column];
   }
 
@@ -204,6 +211,8 @@ public class CellularAutomaton {
    * @return {@code true} if cell can be reached by some pedestrian.
    */
   public boolean isCellReachable(int row, int column) {
+    assert row >= 0 && row < getRows() : "isCellReachable: invalid row";
+    assert column >= 0 && row < getColumns() : "isCellReachable: invalid column";
     return !occupied[row][column] && !scenario.isBlocked(row, column);
   }
 
@@ -227,6 +236,8 @@ public class CellularAutomaton {
    * simulation.
    */
   public boolean willBeOccupied(int row, int column) {
+    assert row >= 0 && row < getRows() : "willBeOccupied: invalid row";
+    assert column >= 0 && row < getColumns() : "willBeOccupied: invalid column";
     return occupiedNextState[row][column];
   }
 
@@ -310,13 +321,12 @@ public class CellularAutomaton {
     }
 
     public void run() {
-      scenario.computeStaticFloorField();
+      scenario.getStaticFloorField().initialize();
       timeSteps = 0;
       var maximalTimeSteps = parameters.secondsTimeLimit() / parameters.secondsPerTimeStep();
 
       if (canvas != null) {
         // show initial configuration for 1.5 seconds
-        paint(canvas);
         canvas.update();
         try {
           Thread.sleep(1500);
@@ -354,7 +364,7 @@ public class CellularAutomaton {
     Canvas canvas = null;
     if (gui) {
       canvas =
-          Canvas.Builder()
+          new Canvas.Builder()
               .rows(scenario.getRows())
               .columns(scenario.getColumns())
               .pixelsPerCell(10)

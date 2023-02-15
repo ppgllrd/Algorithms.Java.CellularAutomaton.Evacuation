@@ -1,6 +1,7 @@
 package automata.scenario.examples;
 
 import automata.scenario.Scenario;
+import automata.scenario.floorField.ManhattanStaticFloorField;
 import geometry._2d.Rectangle;
 
 import static statistics.Random.random;
@@ -10,25 +11,34 @@ import static statistics.Random.random;
  *
  * @author Pepe Gallardo
  */
-public class RandomScenario extends Scenario {
-  public RandomScenario(int rows, int columns, double cellDimension) {
-    super(rows, columns, cellDimension);
+public class RandomScenario {
+  public static Scenario randomScenario() {
+    int rows = 40, columns = 80;
+    double cellDimension = 0.4; // 0.4 meters
+
+    var scenario =
+        new Scenario.Builder()
+            .rows(rows)
+            .columns(columns)
+            .cellDimension(cellDimension)
+            .floorField(ManhattanStaticFloorField::of)
+            .build();
 
     // place exits
     if (random.bernoulli(0.9)) {
-      setExit(new Rectangle(2, columns - 1, 5, 1));
+      scenario.setExit(new Rectangle(2, columns - 1, 5, 1));
     }
     if (random.bernoulli(0.9)) {
-      setExit(new Rectangle(rows - 7, columns - 1, 5, 1));
+      scenario.setExit(new Rectangle(rows - 7, columns - 1, 5, 1));
     }
     if (random.bernoulli(0.9)) {
-      setExit(new Rectangle(10, 0, 5, 1));
+      scenario.setExit(new Rectangle(10, 0, 5, 1));
     }
     if (random.bernoulli(0.9)) {
-      setExit(new Rectangle(rows - 15, 0, 5, 1));
+      scenario.setExit(new Rectangle(rows - 15, 0, 5, 1));
     }
     if (random.bernoulli(0.5)) {
-      setExit(new Rectangle(rows / 2, columns / 2, 2, 2));
+      scenario.setExit(new Rectangle(rows / 2, columns / 2, 2, 2));
     }
 
     // place blocks
@@ -45,13 +55,15 @@ public class RandomScenario extends Scenario {
       // so that blocks are apart
       var border = new Rectangle(row - 2, column - 2, height + 4, width + 4);
 
-      var shoulBePlaced = !border.intersectsAny(exits())
-          && !border.intersectsAny(blocks());
+      var shouldBePlaced = !border.intersectsAny(scenario.exits())
+          && !border.intersectsAny(scenario.blocks());
 
-      if (shoulBePlaced) {
-        setBlock(newBlock);
+      if (shouldBePlaced) {
+        scenario.setBlock(newBlock);
         numberOfBlocksPlaced++;
       }
     }
+
+    return scenario;
   }
 }

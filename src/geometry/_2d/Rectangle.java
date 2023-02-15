@@ -14,6 +14,15 @@ import java.awt.*;
  * @author Pepe Gallardo
  */
 public record Rectangle(int bottom, int left, int height, int width) {
+  public Rectangle {
+    if (height < 0) {
+      throw new IllegalArgumentException("Rectangle: height cannot be negative");
+    }
+    if (width < 0) {
+      throw new IllegalArgumentException("Rectangle: width cannot be negative");
+    }
+  }
+
   public int top() {
     return bottom + height - 1;
   }

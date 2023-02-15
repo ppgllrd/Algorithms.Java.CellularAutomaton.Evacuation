@@ -31,7 +31,7 @@ public class VonNeumannNeighbourhood implements Neighbourhood {
    * @param scenario scenario in which neighbourhood is described.
    * @return a Von Neumann neighbourhood for given scenario.
    */
-  public static Neighbourhood of(Scenario scenario) {
+  public static VonNeumannNeighbourhood of(Scenario scenario) {
     return new VonNeumannNeighbourhood(scenario.getRows(), scenario.getColumns());
   }
 

@@ -16,6 +16,8 @@ public class PedestrianFactory {
   }
 
   public Pedestrian getInstance(int row, int column, PedestrianParameters parameters) {
+    assert row >= 0 && row < automaton.getRows() : "getInstance: invalid row";
+    assert column >= 0 && row < automaton.getColumns() : "getInstance: invalid column";
     return new Pedestrian(row, column, parameters, automaton);
   }
 

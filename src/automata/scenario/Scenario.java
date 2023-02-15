@@ -1,5 +1,7 @@
 package automata.scenario;
 
+import automata.scenario.floorField.FloorField;
+import automata.scenario.floorField.ManhattanStaticFloorField;
 import geometry._2d.Location;
 import geometry._2d.Rectangle;
 import gui.Canvas;
@@ -8,6 +10,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Class for representing static scenario where simulation takes place.
@@ -26,9 +29,9 @@ public class Scenario {
 
   private final Set<Rectangle> exits, blocks;
 
-  private final int[][] staticFloorField;
+  private final FloorField staticFloorField;
 
-  public Scenario(int rows, int columns, double cellDimension) {
+  public Scenario(int rows, int columns, double cellDimension, Function<Scenario, FloorField> buildFloorField) {
     if (rows <= 0) {
       throw new IllegalArgumentException("Scenario: rows should be larger than 0");
     }
@@ -52,41 +55,11 @@ public class Scenario {
     exits = new HashSet<>();
     blocks = new HashSet<>();
 
-    this.staticFloorField = new int[rows][columns];
+    this.staticFloorField = buildFloorField.apply(this);
   }
 
-  public void computeStaticFloorField() {
-    // for each cell compute distance to the closest exit
-    var maxDistance = Integer.MIN_VALUE;
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < columns; j++) {
-        staticFloorField[i][j] = Integer.MAX_VALUE;
-        for (var exit : exits) {
-          int distance = exit.manhattanDistance(i, j);
-          if (distance < staticFloorField[i][j]) {
-            staticFloorField[i][j] = distance;
-            if (distance > maxDistance) {
-              maxDistance = distance;
-            }
-          }
-        }
-      }
-    }
-
-    // normalize, so that the closer to an exit the larger the static field
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < columns; j++) {
-        staticFloorField[i][j] = maxDistance - staticFloorField[i][j];
-      }
-    }
-  }
-
-  public int getStaticFloorField(int row, int column) {
-    return staticFloorField[row][column];
-  }
-
-  public int getStaticFloorField(Location location) {
-    return getStaticFloorField(location.row(), location.column());
+  public FloorField getStaticFloorField() {
+    return staticFloorField;
   }
 
   public int getRows() {
@@ -163,6 +136,40 @@ public class Scenario {
     }
     for (var block : blocks) {
       block.paint(canvas, lightRed, darkRed);
+    }
+  }
+
+  public static final class Builder {
+    private int rows = 10;
+    private int columns = 10;
+    private double cellDimension = 0.5;
+    private Function<Scenario, FloorField> buildFloorField = ManhattanStaticFloorField::of;
+
+    public Builder() {
+    }
+
+    public Builder rows(int rows) {
+      this.rows = rows;
+      return this;
+    }
+
+    public Builder columns(int columns) {
+      this.columns = columns;
+      return this;
+    }
+
+    public Builder cellDimension(double cellDimension) {
+      this.cellDimension = cellDimension;
+      return this;
+    }
+
+    public Builder floorField(Function<Scenario, FloorField> buildFloorField) {
+      this.buildFloorField = buildFloorField;
+      return this;
+    }
+
+    public Scenario build() {
+      return new Scenario(rows, columns, cellDimension, buildFloorField);
     }
   }
 }

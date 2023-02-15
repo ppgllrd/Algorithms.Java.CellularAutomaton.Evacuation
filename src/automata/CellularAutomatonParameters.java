@@ -4,6 +4,8 @@ import automata.neighbourhood.Neighbourhood;
 import automata.neighbourhood.VonNeumannNeighbourhood;
 import automata.scenario.Scenario;
 
+import java.util.function.Function;
+
 /**
  * Class representing parameters for a cellular automaton.
  *
@@ -21,65 +23,58 @@ public record CellularAutomatonParameters(
     , double secondsPerTimeStep
     , int GUITimeFactor
 ) {
-  public interface WithScenarioBuilder {
-    WithTimeLimitBuilder secondsTimeLimit(double secondsTimeLimit);
-  }
 
-  public interface WithTimeLimitBuilder {
-    Builder neighbourhood(Neighbourhood neighbourhood);
-
-    Builder secondsPerTick(double secondsPerTick);
-
-    Builder pedestrianVelocity(double pedestrianVelocity);
-
-    Builder GUITimeFactor(int GUITimeFactor);
-
-    CellularAutomatonParameters build();
-  }
-
-  public final static class Builder implements WithScenarioBuilder, WithTimeLimitBuilder {
-    private Scenario scenario;
-    private Neighbourhood neighbourhood;
-    private double secondsTimeLimit = 100;
-    private double secondsPerTick = 0.4;
-    private int GUITimeFactor = 20; // x20 times faster
-
-    private Builder() {
-    }
-
-    public static WithScenarioBuilder scenario(Scenario scenario) {
-      Builder builder = new Builder();
+  public static final class Builder {
+    public BuilderWithScenario scenario(Scenario scenario) {
+      BuilderWithScenario builder = new BuilderWithScenario();
       builder.scenario = scenario;
-      builder.neighbourhood = VonNeumannNeighbourhood.of(scenario);
       return builder;
     }
+  }
 
-    @Override
-    public Builder neighbourhood(Neighbourhood neighbourhood) {
-      this.neighbourhood = neighbourhood;
+  public static final class BuilderWithScenario {
+    private Scenario scenario;
+
+    private BuilderWithScenario() {
+    }
+
+    public BuilderWithScenarioWithTimeLimit secondsTimeLimit(double secondsTimeLimit) {
+      BuilderWithScenarioWithTimeLimit builder = new BuilderWithScenarioWithTimeLimit(this);
+      builder.secondsTimeLimit = secondsTimeLimit;
+      return builder;
+    }
+  }
+
+  public static final class BuilderWithScenarioWithTimeLimit {
+    private final Scenario scenario;
+    private double secondsTimeLimit;
+    private Neighbourhood neighbourhood;
+    private double secondsPerTick;
+    private int GUITimeFactor;
+
+    private BuilderWithScenarioWithTimeLimit(BuilderWithScenario builder) {
+      this.scenario = builder.scenario;
+      this.neighbourhood = VonNeumannNeighbourhood.of(scenario); // default neighbourhood
+      this.secondsPerTick = 0.4; // default is 0.4 secs per tick
+      this.GUITimeFactor = 20; // default GUI time is x20 faster
+    }
+
+    public BuilderWithScenarioWithTimeLimit neighbourhood(Function<Scenario, Neighbourhood> buildNeighbourhood) {
+      this.neighbourhood = buildNeighbourhood.apply(scenario);
       return this;
     }
 
-    @Override
-    public Builder secondsTimeLimit(double secondsTimeLimit) {
-      this.secondsTimeLimit = secondsTimeLimit;
-      return this;
-    }
-
-    @Override
-    public Builder secondsPerTick(double secondsPerTick) {
+    public BuilderWithScenarioWithTimeLimit secondsPerTick(double secondsPerTick) {
       this.secondsPerTick = secondsPerTick;
       return this;
     }
 
-    @Override
-    public Builder pedestrianVelocity(double pedestrianVelocity) {
+    public BuilderWithScenarioWithTimeLimit pedestrianVelocity(double pedestrianVelocity) {
       this.secondsPerTick = pedestrianVelocity * scenario.getCellDimension();
       return this;
     }
 
-    @Override
-    public Builder GUITimeFactor(int GUITimeFactor) {
+    public BuilderWithScenarioWithTimeLimit GUITimeFactor(int GUITimeFactor) {
       this.GUITimeFactor = GUITimeFactor;
       return this;
     }
