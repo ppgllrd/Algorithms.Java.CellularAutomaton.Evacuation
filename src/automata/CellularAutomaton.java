@@ -314,7 +314,7 @@ public class CellularAutomaton {
    * Thread for running the simulation.
    */
   private class RunThread extends Thread {
-    Canvas canvas;
+    final Canvas canvas;
 
     public RunThread(Canvas canvas) {
       this.canvas = canvas;

@@ -115,7 +115,7 @@ public class Descriptive {
   }
 
   private static class Selection {
-    double[] data;
+    private final double[] data;
 
     Selection(double[] data) {
       this.data = Arrays.copyOf(data, data.length);
@@ -211,12 +211,12 @@ public class Descriptive {
     } else {
       var rank = percentRank * (data.length - 1) / 100;
       var intPart = (int) rank;
-      var fractPart = rank - intPart;
+      var fractionalPart = rank - intPart;
 
       var dataIntPart = selection.select(intPart);
       var dataIntPartNext = selection.select(intPart + 1);
 
-      return dataIntPart + fractPart * (dataIntPartNext - dataIntPart);
+      return dataIntPart + fractionalPart * (dataIntPartNext - dataIntPart);
     }
   }
 
@@ -327,12 +327,12 @@ public class Descriptive {
     } else {
       var rank = percentRank * (data.length - 1) / 100;
       var intPart = (int) rank;
-      var fractPart = rank - intPart;
+      var fractionalPart = rank - intPart;
 
       var dataIntPart = selection.select(intPart);
       var dataIntPartNext = selection.select(intPart + 1);
 
-      return dataIntPart + fractPart * (dataIntPartNext - dataIntPart);
+      return dataIntPart + fractionalPart * (dataIntPartNext - dataIntPart);
     }
   }
 

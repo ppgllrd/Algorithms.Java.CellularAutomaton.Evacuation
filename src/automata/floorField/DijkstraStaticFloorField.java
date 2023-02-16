@@ -13,7 +13,7 @@ import java.util.function.Function;
  * @author Pepe Gallardo
  */
 public class DijkstraStaticFloorField extends StaticFloorField {
-  Neighbourhood neighbourhood;
+  protected final Neighbourhood neighbourhood;
 
   public DijkstraStaticFloorField(Scenario scenario, Function<Scenario, Neighbourhood> buildNeighbourhood) {
     super(new double[scenario.getRows()][scenario.getColumns()], scenario);
@@ -78,7 +78,7 @@ public class DijkstraStaticFloorField extends StaticFloorField {
       }
     }
 
-    // normalize so that the closer to an exit the larger the static field
+    // Normalize so that the closer to an exit the larger the static field
     for (int i = 0; i < getRows(); i++) {
       for (int j = 0; j < getColumns(); j++) {
         if (!scenario.isBlocked(i, j)) {

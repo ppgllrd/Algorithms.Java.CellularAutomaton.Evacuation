@@ -78,6 +78,9 @@ public abstract class Canvas extends JLabel {
     return width;
   }
 
+  /**
+   * Class for building a canvas by providing its parameters.
+   */
   public static final class Builder {
     int rows = 20, columns = 20, pixelsPerCell = 5;
     Color color = Color.white;

@@ -17,7 +17,7 @@ public class ManhattanStaticFloorField extends StaticFloorField {
   }
 
   public void initialize() {
-    // for each cell compute distance to the closest exit
+    // For each cell compute Manhattan distance to closest exit
     var maxDistance = Double.MIN_VALUE;
     for (int i = 0; i < getRows(); i++) {
       for (int j = 0; j < getColumns(); j++) {
@@ -34,7 +34,7 @@ public class ManhattanStaticFloorField extends StaticFloorField {
       }
     }
 
-    // normalize so that the closer to an exit the larger the static field
+    // Normalize so that the closer to an exit the larger the static field
     for (int i = 0; i < getRows(); i++) {
       for (int j = 0; j < getColumns(); j++) {
         staticFloorField[i][j] = maxDistance - staticFloorField[i][j];

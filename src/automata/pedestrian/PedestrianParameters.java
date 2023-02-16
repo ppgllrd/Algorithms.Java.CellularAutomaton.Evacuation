@@ -8,6 +8,9 @@ package automata.pedestrian;
  * @author Pepe Gallardo
  */
 public record PedestrianParameters(double fieldAttractionBias, double crowdRepulsion) {
+  /**
+   * Class for building a pedestrian parameters by providing each one.
+   */
   public static final class Builder {
     private double fieldAttractionBias = 1.0;
     private double crowdRepulsion = 1.10;

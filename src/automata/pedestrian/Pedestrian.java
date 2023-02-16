@@ -54,7 +54,7 @@ public class Pedestrian {
   /**
    * A tentative movement consists of a location (where we should move) and a desirability (the higher the
    * desirability the higher the willingness to move to such location). We do not use the term probability because
-   * sum ofall desirabilities do not have to be 1.
+   * sum of all desirabilities do not have to be 1.
    *
    * @param location     where we should move.
    * @param desirability willing to move to such location
@@ -228,7 +228,7 @@ public class Pedestrian {
   }
 
   /**
-   * Paint pedestrian in GUI representing the simulation.
+   * Paints pedestrian in GUI representing the simulation.
    *
    * @param canvas       Graphical canvas where pedestrian should be drawn.
    * @param fillColor    fill color for drawing pedestrian.

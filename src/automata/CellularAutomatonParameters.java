@@ -24,6 +24,9 @@ public record CellularAutomatonParameters(
     , int GUITimeFactor
 ) {
 
+  /**
+   * Classes for building cellular automaton parameters by providing each one.
+   */
   public static final class Builder {
     public BuilderWithScenario scenario(Scenario scenario) {
       BuilderWithScenario builder = new BuilderWithScenario();

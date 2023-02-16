@@ -39,7 +39,7 @@ public interface FloorField {
   /**
    * Gets field of cell located at given location.
    *
-   * @param location locastion of cell.
+   * @param location location of cell.
    * @return field of cell located at {@code location}.
    */
   double getField(Location location);
