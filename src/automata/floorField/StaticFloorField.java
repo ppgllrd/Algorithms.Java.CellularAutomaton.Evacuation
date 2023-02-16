@@ -1,4 +1,4 @@
-package automata.scenario.floorField;
+package automata.floorField;
 
 import automata.scenario.Scenario;
 import geometry._2d.Location;
@@ -9,10 +9,10 @@ import geometry._2d.Location;
  * @author Pepe Gallardo
  */
 public abstract class StaticFloorField implements FloorField {
-  protected final int[][] staticFloorField;
+  protected final double[][] staticFloorField;
   protected final Scenario scenario;
 
-  protected StaticFloorField(int[][] staticFloorField, Scenario scenario) {
+  protected StaticFloorField(double[][] staticFloorField, Scenario scenario) {
     this.staticFloorField = staticFloorField;
     this.scenario = scenario;
   }
@@ -30,14 +30,14 @@ public abstract class StaticFloorField implements FloorField {
   }
 
   @Override
-  public int getField(int row, int column) {
+  public double getField(int row, int column) {
     assert (row >= 0 && row < getRows()) : "getField: invalid row";
     assert (column >= 0 && column < getColumns()) : "getField: invalid column";
     return staticFloorField[row][column];
   }
 
   @Override
-  public int getField(Location location) {
+  public double getField(Location location) {
     return getField(location.row(), location.column());
   }
 }

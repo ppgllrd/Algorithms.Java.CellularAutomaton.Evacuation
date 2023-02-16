@@ -1,4 +1,4 @@
-package automata.scenario.floorField;
+package automata.floorField;
 
 import geometry._2d.Location;
 
@@ -34,7 +34,7 @@ public interface FloorField {
    * @param column horizontal coordinate of cell.
    * @return field of cell located at {@code row} and {@code column}.
    */
-  int getField(int row, int column);
+  double getField(int row, int column);
 
   /**
    * Gets field of cell located at given location.
@@ -42,5 +42,5 @@ public interface FloorField {
    * @param location locastion of cell.
    * @return field of cell located at {@code location}.
    */
-  int getField(Location location);
+  double getField(Location location);
 }

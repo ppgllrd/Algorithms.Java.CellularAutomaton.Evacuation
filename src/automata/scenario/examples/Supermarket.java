@@ -1,7 +1,7 @@
 package automata.scenario.examples;
 
+import automata.floorField.DijkstraStaticFloorFieldWithMooreNeighbourhood;
 import automata.scenario.Scenario;
-import automata.scenario.floorField.ManhattanStaticFloorField;
 import geometry._2d.Rectangle;
 
 
@@ -20,7 +20,7 @@ public class Supermarket {
             .rows(rows)
             .columns(columns)
             .cellDimension(cellDimension)
-            .floorField(ManhattanStaticFloorField::of)
+            .floorField(DijkstraStaticFloorFieldWithMooreNeighbourhood::of)
             .build();
 
     // top corner

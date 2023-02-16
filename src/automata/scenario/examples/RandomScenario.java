@@ -1,7 +1,7 @@
 package automata.scenario.examples;
 
+import automata.floorField.DijkstraStaticFloorFieldWithMooreNeighbourhood;
 import automata.scenario.Scenario;
-import automata.scenario.floorField.ManhattanStaticFloorField;
 import geometry._2d.Rectangle;
 
 import static statistics.Random.random;
@@ -13,7 +13,7 @@ import static statistics.Random.random;
  */
 public class RandomScenario {
   public static Scenario randomScenario() {
-    int rows = 40, columns = 80;
+    int rows = 45, columns = 90;
     double cellDimension = 0.4; // 0.4 meters
 
     var scenario =
@@ -21,7 +21,7 @@ public class RandomScenario {
             .rows(rows)
             .columns(columns)
             .cellDimension(cellDimension)
-            .floorField(ManhattanStaticFloorField::of)
+            .floorField(DijkstraStaticFloorFieldWithMooreNeighbourhood::of)
             .build();
 
     // place exits
@@ -42,14 +42,15 @@ public class RandomScenario {
     }
 
     // place blocks
-    int numberOfBlocks = random.nextInt(20, 50);
+    int numberOfBlocks = random.nextInt(50, 120);
     int numberOfBlocksPlaced = 0;
-    while (numberOfBlocksPlaced < numberOfBlocks) {
-      var width = 1 + random.nextInt(20);
+    int maxTries = numberOfBlocks * 3;
+    while (numberOfBlocksPlaced < numberOfBlocks && maxTries > 0) {
+      var width = random.bernoulli(0.5) ? 1 + random.nextInt(2) : 1 + random.nextInt(20);
       var height = 1 + random.nextInt(Math.max(1, rows / (2 * width)));
 
       var row = random.nextInt(0, 1 + rows - height);
-      var column = random.nextInt(3, 1 + columns - width - 3);
+      var column = random.nextInt(2, 1 + columns - width - 2);
 
       var newBlock = new Rectangle(row, column, height, width);
       // so that blocks are apart
@@ -62,6 +63,7 @@ public class RandomScenario {
         scenario.setBlock(newBlock);
         numberOfBlocksPlaced++;
       }
+      maxTries -= 1;
     }
 
     return scenario;

@@ -1,7 +1,7 @@
 package automata.scenario;
 
-import automata.scenario.floorField.FloorField;
-import automata.scenario.floorField.ManhattanStaticFloorField;
+import automata.floorField.FloorField;
+import automata.floorField.ManhattanStaticFloorField;
 import geometry._2d.Location;
 import geometry._2d.Rectangle;
 import gui.Canvas;
