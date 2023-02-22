@@ -29,7 +29,7 @@ public class MooreNeighbourhood implements Neighbourhood {
    * Creates a Moore neighbourhood for given scenario.
    *
    * @param scenario scenario in which neighbourhood is described.
-   * @return a Von Neumann neighbourhood for given scenario.
+   * @return a Moore neighbourhood for given scenario.
    */
   public static MooreNeighbourhood of(Scenario scenario) {
     return new MooreNeighbourhood(scenario.getRows(), scenario.getColumns());
